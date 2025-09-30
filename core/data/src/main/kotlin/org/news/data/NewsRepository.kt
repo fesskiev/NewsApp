@@ -34,11 +34,11 @@ class NewsRepositoryImpl(
         }
 
         // Fetch from API if not in cache
-        val remoteNews = apiService.searchNews(query, from, to)
+        val remoteNews = apiService.searchNews(query, from, to).mapToDomainArticles()
 
         // Store in cache
-        cache[cacheKey] = remoteNews.mapToDomainArticles()
+        cache[cacheKey] = remoteNews
 
-        return remoteNews.mapToDomainArticles()
+        return remoteNews
     }
 }

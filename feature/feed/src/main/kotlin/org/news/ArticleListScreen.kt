@@ -3,14 +3,19 @@
 package org.news
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -19,28 +24,44 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDefaults
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.koin.compose.viewmodel.koinViewModel
 import org.news.feed.R
 import org.news.model.Article
+
+data class CustomSnackbarVisuals(
+    override val message: String,
+    override val actionLabel: String? = null,
+    override val withDismissAction: Boolean = false,
+    override val duration: SnackbarDuration = SnackbarDuration.Short,
+    val isError: Boolean = false
+) : SnackbarVisuals
 
 @Composable
 fun ArticleListScreen(
@@ -51,21 +72,37 @@ fun ArticleListScreen(
     val event by viewModel.uiEvent.collectAsState(null)
 
     val snackbarHostState = remember { SnackbarHostState() }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(event) {
-        val event = event?.event ?: return@LaunchedEffect
-        when (event) {
-            is ArticleListEvent.EmptyQuery -> snackbarHostState.showSnackbar(
-                message = "Query field is empty",
-                duration = SnackbarDuration.Short
+        val currentEvent = event?.event ?: return@LaunchedEffect
+        when (currentEvent) {
+            ArticleListEvent.EmptyQuery -> snackbarHostState.showSnackbar(
+                CustomSnackbarVisuals(
+                    message = "Query field is empty",
+                    duration = SnackbarDuration.Short,
+                    isError = false
+                )
             )
+
             is ArticleListEvent.Error -> snackbarHostState.showSnackbar(
-                message = "Failed to load articles: ${event.message}",
-                withDismissAction = true,
-                duration = SnackbarDuration.Indefinite
+                CustomSnackbarVisuals(
+                    message = "Failed to load articles: ${currentEvent.message}",
+                    duration = SnackbarDuration.Short,
+                    isError = true
+                )
+            )
+
+            ArticleListEvent.EmptyArticlesResponse -> snackbarHostState.showSnackbar(
+                CustomSnackbarVisuals(
+                    message = "No articles founded",
+                    duration = SnackbarDuration.Short,
+                    isError = false
+                )
             )
         }
     }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -84,12 +121,21 @@ fun ArticleListScreen(
                 },
                 actions = {
                     IconButton(
+                        onClick = { showDatePicker = !showDatePicker }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_date_range),
+                            contentDescription = "Refresh",
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                    IconButton(
                         onClick = { viewModel.onAction(ArticleListAction.RefreshArticles) }
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_refresh),
                             contentDescription = "Refresh",
-                            modifier = Modifier.size(42.dp)
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                 },
@@ -100,7 +146,28 @@ fun ArticleListScreen(
             )
         },
         snackbarHost = {
-            SnackbarHost(snackbarHostState)
+            SnackbarHost(snackbarHostState) { snackbarData ->
+                val isError = (snackbarData.visuals as? CustomSnackbarVisuals)?.isError ?: false
+
+                val containerColor = if (isError) Color.Red else SnackbarDefaults.color
+                val contentColor = if (isError) Color.White else SnackbarDefaults.contentColor
+
+                Snackbar(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .height(52.dp),
+                    containerColor = containerColor,
+                    contentColor = contentColor,
+                    actionContentColor = contentColor,
+                    dismissActionContentColor = contentColor,
+                    content = {
+                        Text(
+                            text = snackbarData.visuals.message,
+                            fontSize = 16.sp
+                        )
+                    }
+                )
+            }
         }
     ) { paddingValues ->
         Box(
@@ -114,7 +181,8 @@ fun ArticleListScreen(
                     ListItem(
                         headlineContent = {
                             Text(
-                                text = article.title, fontWeight = FontWeight.Bold,
+                                text = article.title,
+                                fontWeight = FontWeight.Bold,
                                 maxLines = 2
                             )
                         },
@@ -138,9 +206,90 @@ fun ArticleListScreen(
 
             if (state.isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(100.dp)
+                    modifier = Modifier.size(80.dp)
+                )
+            }
+
+            if (showDatePicker) {
+                DateRangePickerDialog(
+                    currentFrom = state.from,
+                    currentTo = state.to,
+                    onDismiss = { showDatePicker = false },
+                    onConfirm = { from, to ->
+                        showDatePicker = false
+                        viewModel.onAction(ArticleListAction.UpdateDateRange(from, to))
+                    }
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun DateRangePickerDialog(
+    currentFrom: Long,
+    currentTo: Long,
+    onDismiss: () -> Unit,
+    onConfirm: (from: Long, to: Long) -> Unit
+) {
+    val state = rememberDateRangePickerState(
+        initialSelectedStartDateMillis = currentFrom,
+        initialSelectedEndDateMillis = currentTo
+    )
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val start = state.selectedStartDateMillis
+                    val end = state.selectedEndDateMillis
+                    if (start != null && end != null) {
+                        onConfirm(start, end)
+                    }
+                },
+                enabled = state.selectedStartDateMillis != null &&
+                        state.selectedEndDateMillis != null
+            ) {
+                Text("OK", fontSize = 16.sp)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", fontSize = 16.sp)
+            }
+        }
+    ) {
+        DateRangePicker(
+            state = state,
+            title = {
+                Text(
+                    text = "Select Date Range",
+                    modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp),
+                    fontSize = 20.sp
+                )
+            },
+            headline = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = state.selectedStartDateMillis?.toDateString() ?: "From",
+                        fontSize = 16.sp
+                    )
+                    Text(
+                        text = state.selectedEndDateMillis?.toDateString() ?: "To",
+                        fontSize = 16.sp
+                    )
+                }
+            },
+            showModeToggle = false,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(500.dp)
+        )
     }
 }

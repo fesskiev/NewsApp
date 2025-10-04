@@ -15,27 +15,31 @@ import java.util.Locale
 import kotlin.time.Duration.Companion.days
 
 private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT)
-private val nowMillis = System.currentTimeMillis()
 
-private val today = dateFormatter.format(Date(nowMillis))
-private val yesterday = dateFormatter.format(Date(nowMillis - 1.days.inWholeMilliseconds))
+private val nowMillis = System.currentTimeMillis()
+private val today = nowMillis
+private val yesterday = nowMillis - 1.days.inWholeMilliseconds
+
+fun Long.toDateString(): String = dateFormatter.format(Date(this))
 
 data class ArticleListState(
     val articles: List<Article> = emptyList(),
     val isLoading: Boolean = false,
     val query: String = "",
-    val from: String = yesterday,
-    val to: String = today
+    val from: Long = yesterday,
+    val to: Long = today
 )
 
 sealed interface ArticleListAction {
     data object RefreshArticles : ArticleListAction
     data class UpdateQuery(val query: String) : ArticleListAction
+    data class UpdateDateRange(val from: Long, val to: Long) : ArticleListAction
 }
 
 sealed interface ArticleListEvent {
     data object EmptyQuery : ArticleListEvent
     data class Error(val message: String?) : ArticleListEvent
+    data object EmptyArticlesResponse : ArticleListEvent
 }
 
 class ArticleListViewModel(
@@ -50,6 +54,12 @@ class ArticleListViewModel(
         when (action) {
             is ArticleListAction.RefreshArticles -> refreshArticles()
             is ArticleListAction.UpdateQuery -> updateQuery(action.query)
+            is ArticleListAction.UpdateDateRange -> uiState.update {
+                it.copy(
+                    from = action.from,
+                    to = action.to
+                )
+            }
         }
     }
 
@@ -59,7 +69,11 @@ class ArticleListViewModel(
                 emitUiEvent(ArticleListEvent.EmptyQuery)
                 return
             }
-            repository.clearQueryCache(query, from, to)
+            repository.clearQueryCache(
+                query = query,
+                from = from.toDateString(),
+                to = to.toDateString()
+            )
             viewModelScope.launch {
                 fetchArticles(query)
             }
@@ -81,10 +95,15 @@ class ArticleListViewModel(
                 update { it.copy(isLoading = true) }
                 val articles = repository.searchNews(
                     query = query,
-                    from = value.from,
-                    to = value.to
+                    from = value.from.toDateString(),
+                    to = value.to.toDateString()
                 )
-                update { it.copy(articles = articles, isLoading = false) }
+                if (articles.isEmpty()) {
+                    emitUiEvent(ArticleListEvent.EmptyArticlesResponse)
+                    update { it.copy(isLoading = false) }
+                } else {
+                    update { it.copy(articles = articles, isLoading = false) }
+                }
 
             }.onFailure { failure ->
                 update { it.copy(isLoading = false) }

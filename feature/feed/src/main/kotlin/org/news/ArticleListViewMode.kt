@@ -22,9 +22,8 @@ private val yesterday = dateFormatter.format(Date(nowMillis - 1.days.inWholeMill
 
 data class ArticleListState(
     val articles: List<Article> = emptyList(),
-    val query: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null,
+    val query: String = "",
     val from: String = yesterday,
     val to: String = today
 )
@@ -35,7 +34,8 @@ sealed interface ArticleListAction {
 }
 
 sealed interface ArticleListEvent {
-    data object EmptyQuery: ArticleListEvent
+    data object EmptyQuery : ArticleListEvent
+    data class Error(val message: String?) : ArticleListEvent
 }
 
 class ArticleListViewModel(
@@ -54,17 +54,20 @@ class ArticleListViewModel(
     }
 
     private fun refreshArticles() {
-        val query = uiState.value.query
-        if (query.isEmpty()) {
-            emitUiEvent(ArticleListEvent.EmptyQuery)
-            return
+        with(uiState.value) {
+            if (query.isEmpty()) {
+                emitUiEvent(ArticleListEvent.EmptyQuery)
+                return
+            }
+            repository.clearQueryCache(query, from, to)
+            viewModelScope.launch {
+                fetchArticles(query)
+            }
         }
-        fetchArticles(query)
     }
 
     private fun updateQuery(query: String) {
         uiState.update { it.copy(query = query) }
-
         queryJob?.cancel()
         queryJob = viewModelScope.launch {
             delay(500)
@@ -72,26 +75,20 @@ class ArticleListViewModel(
         }
     }
 
-    private fun fetchArticles(query: String) {
-        viewModelScope.launch {
+    private suspend fun fetchArticles(query: String) {
+        with(uiState) {
             executeWithTryCatch {
-                uiState.update { it.copy(isLoading = true, error = null) }
+                update { it.copy(isLoading = true) }
                 val articles = repository.searchNews(
                     query = query,
-                    from = uiState.value.from,
-                    to = uiState.value.to
+                    from = value.from,
+                    to = value.to
                 )
-                uiState.update {
-                    it.copy(articles = articles, isLoading = false, error = null)
-                }
+                update { it.copy(articles = articles, isLoading = false) }
 
             }.onFailure { failure ->
-                uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to load articles: ${failure.message}"
-                    )
-                }
+                update { it.copy(isLoading = false) }
+                emitUiEvent(ArticleListEvent.Error(message = failure.message))
             }
         }
     }

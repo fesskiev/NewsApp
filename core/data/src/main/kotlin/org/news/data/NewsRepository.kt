@@ -11,6 +11,12 @@ interface NewsRepository {
         from: String,
         to: String
     ): List<Article>
+
+    fun clearQueryCache(
+        query: String,
+        from: String,
+        to: String
+    ): Boolean
 }
 
 class NewsRepositoryImpl(
@@ -40,5 +46,14 @@ class NewsRepositoryImpl(
         cache[cacheKey] = remoteNews
 
         return remoteNews
+    }
+
+    override fun clearQueryCache(
+        query: String,
+        from: String,
+        to: String
+    ): Boolean {
+        val cacheKey = "$query|$from|$to"
+        return cache.remove(cacheKey) != null
     }
 }

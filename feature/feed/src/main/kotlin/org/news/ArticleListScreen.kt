@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.koin.compose.viewmodel.koinViewModel
+import org.news.common.mvi.UiEvent
 import org.news.feed.R
 import org.news.model.Article
 
@@ -66,14 +67,28 @@ fun ArticleListScreen(
     onArticleClick: (Article) -> Unit,
     viewModel: ArticleListViewModel = koinViewModel()
 ) {
-
     val uiState by viewModel.uiState.collectAsState()
-    val event by viewModel.uiEvent.collectAsState(null)
+    val uiEvent by viewModel.uiEvent.collectAsState(null)
 
+    ArticleListScaffold(
+        uiState = uiState,
+        uiEvent = uiEvent,
+        onArticleClick = onArticleClick,
+        onAction = { viewModel.onAction(it) }
+    )
+}
+
+@Composable
+fun ArticleListScaffold(
+    uiState: ArticleListState,
+    uiEvent: UiEvent<ArticleListEvent>?,
+    onArticleClick: (Article) -> Unit,
+    onAction: (ArticleListAction) -> Unit
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(event) {
-        val currentEvent = event?.event ?: return@LaunchedEffect
+    LaunchedEffect(uiEvent) {
+        val currentEvent = uiEvent?.event ?: return@LaunchedEffect
         when (currentEvent) {
             ArticleListEvent.EmptyQuery -> snackbarHostState.showSnackbar(
                 CustomSnackbarVisuals(
@@ -101,22 +116,6 @@ fun ArticleListScreen(
         }
     }
 
-    ArticleListScaffold(
-        uiState = uiState,
-        snackbarHostState = snackbarHostState,
-        onArticleClick = onArticleClick,
-        onAction = { viewModel.onAction(it) }
-    )
-}
-
-@Composable
-fun ArticleListScaffold(
-    uiState: ArticleListState,
-    snackbarHostState: SnackbarHostState,
-    onArticleClick: (Article) -> Unit,
-    onAction: (ArticleListAction) -> Unit
-) {
-    var showDatePicker by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(

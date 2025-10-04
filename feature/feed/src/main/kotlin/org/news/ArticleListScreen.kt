@@ -10,11 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,9 +32,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
+import org.news.feed.R
 import org.news.model.Article
 
 @Composable
@@ -46,6 +45,7 @@ fun ArticleListScreen(
     viewModel: ArticleListViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val event by viewModel.uiEvent.collectAsState(null)
 
     Scaffold(
         topBar = {
@@ -54,7 +54,7 @@ fun ArticleListScreen(
                 actions = {
                     Row(
                         modifier = Modifier
-                            .wrapContentWidth(),
+                            .fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -74,7 +74,7 @@ fun ArticleListScreen(
                             onClick = { viewModel.onAction(ArticleListAction.RefreshArticles) }
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Refresh,
+                                painter = painterResource(id = R.drawable.ic_refresh),
                                 contentDescription = "Refresh",
                                 modifier = Modifier.size(48.dp)
                             )

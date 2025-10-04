@@ -8,6 +8,9 @@ android {
     namespace = "org.news.feed"
 
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
+    }
     buildFeatures {
         compose = true
     }

@@ -9,12 +9,24 @@ import org.news.common.mvi.MviViewModel
 import org.news.common.utils.executeWithTryCatch
 import org.news.data.NewsRepository
 import org.news.model.Article
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlin.time.Duration.Companion.days
+
+private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT)
+private val nowMillis = System.currentTimeMillis()
+
+private val today = dateFormatter.format(Date(nowMillis))
+private val yesterday = dateFormatter.format(Date(nowMillis - 1.days.inWholeMilliseconds))
 
 data class ArticleListState(
     val articles: List<Article> = emptyList(),
     val query: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val from: String = yesterday,
+    val to: String = today
 )
 
 sealed interface ArticleListAction {
@@ -66,8 +78,8 @@ class ArticleListViewModel(
                 uiState.update { it.copy(isLoading = true, error = null) }
                 val articles = repository.searchNews(
                     query = query,
-                    from = "2025-09-29",
-                    to = "2025-09-30"
+                    from = uiState.value.from,
+                    to = uiState.value.to
                 )
                 uiState.update {
                     it.copy(articles = articles, isLoading = false, error = null)

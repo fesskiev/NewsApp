@@ -3,9 +3,7 @@
 package org.news
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -68,11 +66,11 @@ fun ArticleListScreen(
     onArticleClick: (Article) -> Unit,
     viewModel: ArticleListViewModel = koinViewModel()
 ) {
-    val state by viewModel.uiState.collectAsState()
+
+    val uiState by viewModel.uiState.collectAsState()
     val event by viewModel.uiEvent.collectAsState(null)
 
     val snackbarHostState = remember { SnackbarHostState() }
-    var showDatePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(event) {
         val currentEvent = event?.event ?: return@LaunchedEffect
@@ -103,13 +101,29 @@ fun ArticleListScreen(
         }
     }
 
+    ArticleListScaffold(
+        uiState = uiState,
+        snackbarHostState = snackbarHostState,
+        onArticleClick = onArticleClick,
+        onAction = { viewModel.onAction(it) }
+    )
+}
+
+@Composable
+fun ArticleListScaffold(
+    uiState: ArticleListState,
+    snackbarHostState: SnackbarHostState,
+    onArticleClick: (Article) -> Unit,
+    onAction: (ArticleListAction) -> Unit
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     TextField(
-                        value = state.query,
-                        onValueChange = { viewModel.onAction(ArticleListAction.UpdateQuery(it)) },
+                        value = uiState.query,
+                        onValueChange = { onAction(ArticleListAction.UpdateQuery(it)) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -126,21 +140,21 @@ fun ArticleListScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_date_range),
                             contentDescription = "Refresh",
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(30.dp)
                         )
                     }
                     IconButton(
-                        onClick = { viewModel.onAction(ArticleListAction.RefreshArticles) }
+                        onClick = { onAction(ArticleListAction.RefreshArticles) }
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_refresh),
                             contentDescription = "Refresh",
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(30.dp)
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFD5CBCB),
+                    containerColor = Color(0xFFE5DDDD),
                     titleContentColor = MaterialTheme.colorScheme.primary
                 )
             )
@@ -176,35 +190,12 @@ fun ArticleListScreen(
                 .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(state.articles) { article ->
-                    ListItem(
-                        headlineContent = {
-                            Text(
-                                text = article.title,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 2
-                            )
-                        },
-                        supportingContent = {
-                            Text(
-                                text = article.description,
-                                maxLines = 5
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onArticleClick(article) }
-                            .padding(vertical = 8.dp)
-                    )
-                    HorizontalDivider(
-                        thickness = DividerDefaults.Thickness,
-                        color = DividerDefaults.color
-                    )
-                }
-            }
+            ArticleList(
+                uiState = uiState,
+                onArticleClick = onArticleClick
+            )
 
-            if (state.isLoading) {
+            if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(80.dp)
                 )
@@ -212,15 +203,49 @@ fun ArticleListScreen(
 
             if (showDatePicker) {
                 DateRangePickerDialog(
-                    currentFrom = state.from,
-                    currentTo = state.to,
+                    currentFrom = uiState.from,
+                    currentTo = uiState.to,
                     onDismiss = { showDatePicker = false },
                     onConfirm = { from, to ->
                         showDatePicker = false
-                        viewModel.onAction(ArticleListAction.UpdateDateRange(from, to))
+                        onAction(ArticleListAction.UpdateDateRange(from, to))
                     }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ArticleList(
+    uiState: ArticleListState,
+    onArticleClick: (Article) -> Unit
+) {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(uiState.articles) { article ->
+            ListItem(
+                headlineContent = {
+                    Text(
+                        text = article.title,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        text = article.description,
+                        maxLines = 5
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onArticleClick(article) }
+                    .padding(vertical = 8.dp)
+            )
+            HorizontalDivider(
+                thickness = DividerDefaults.Thickness,
+                color = DividerDefaults.color
+            )
         }
     }
 }
@@ -262,30 +287,7 @@ private fun DateRangePickerDialog(
     ) {
         DateRangePicker(
             state = state,
-            title = {
-                Text(
-                    text = "Select Date Range",
-                    modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp),
-                    fontSize = 20.sp
-                )
-            },
-            headline = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = state.selectedStartDateMillis?.toDateString() ?: "From",
-                        fontSize = 16.sp
-                    )
-                    Text(
-                        text = state.selectedEndDateMillis?.toDateString() ?: "To",
-                        fontSize = 16.sp
-                    )
-                }
-            },
+            title = {},
             showModeToggle = false,
             modifier = Modifier
                 .fillMaxWidth()

@@ -20,7 +20,7 @@ private val nowMillis = System.currentTimeMillis()
 private val today = nowMillis
 private val yesterday = nowMillis - 1.days.inWholeMilliseconds
 
-fun Long.toDateString(): String = dateFormatter.format(Date(this))
+private fun Long.toDateString(): String = dateFormatter.format(Date(this))
 
 data class ArticleListState(
     val articles: List<Article> = emptyList(),

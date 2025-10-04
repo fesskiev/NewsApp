@@ -30,19 +30,19 @@ data class ArticleListState(
     val to: Long = today
 )
 
-sealed interface ArticleListAction {
+internal sealed interface ArticleListAction {
     data object RefreshArticles : ArticleListAction
     data class UpdateQuery(val query: String) : ArticleListAction
     data class UpdateDateRange(val from: Long, val to: Long) : ArticleListAction
 }
 
-sealed interface ArticleListEvent {
+internal sealed interface ArticleListEvent {
     data object EmptyQuery : ArticleListEvent
     data class Error(val message: String?) : ArticleListEvent
     data object EmptyArticlesResponse : ArticleListEvent
 }
 
-class ArticleListViewModel(
+internal class ArticleListViewModel(
     private val repository: NewsRepository
 ) : MviViewModel<ArticleListState, ArticleListAction, ArticleListEvent>(
     initialState = ArticleListState()

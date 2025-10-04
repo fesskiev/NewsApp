@@ -1,4 +1,4 @@
-package org.news.ui.theme
+package org.news.design
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

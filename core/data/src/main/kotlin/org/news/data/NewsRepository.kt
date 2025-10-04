@@ -19,7 +19,7 @@ interface NewsRepository {
     ): Boolean
 }
 
-class NewsRepositoryImpl(
+internal class NewsRepositoryImpl(
     private val apiService: NewsApiService
 ) : NewsRepository {
 

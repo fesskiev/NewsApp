@@ -19,10 +19,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+}
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
+kotlin {
+    jvmToolchain(11)
 }
 
 dependencies {
@@ -41,4 +41,9 @@ dependencies {
     implementation(libs.koin.compose)
     implementation(libs.koin.compose.viewmodel)
     implementation(libs.koin.compose.viewmodel.navigation)
+
+    androidTestImplementation (libs.androidx.compose.ui.test.junit4)
+    debugImplementation (libs.androidx.compose.ui.test.manifest)
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
 }

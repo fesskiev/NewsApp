@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 
 package org.news
 
@@ -49,6 +49,7 @@ import org.news.design.components.Snackbar
 import org.news.design.components.SnackbarParams
 import org.news.feed.R
 import org.news.model.Article
+import kotlin.uuid.ExperimentalUuidApi
 
 @Composable
 fun ArticleListRoute(
@@ -76,7 +77,7 @@ private fun ArticleListScreen(
 }
 
 @Composable
-private fun ArticleListContent(
+internal fun ArticleListContent(
     uiState: ArticleListState,
     uiEvent: UiEvent<ArticleListEvent>?,
     onArticleClick: (Article) -> Unit,
@@ -122,7 +123,7 @@ private fun ArticleListContent(
         query = uiState.query
     ) {
         ArticleList(
-            uiState = uiState,
+            articles = uiState.articles,
             onArticleClick = onArticleClick
         )
 
@@ -212,11 +213,11 @@ private fun ArticleListScaffold(
 
 @Composable
 private fun ArticleList(
-    uiState: ArticleListState,
+    articles: List<Article>,
     onArticleClick: (Article) -> Unit
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(uiState.articles) { article ->
+        items(articles) { article ->
             ListItem(
                 headlineContent = {
                     Text(
@@ -246,58 +247,14 @@ private fun ArticleList(
 
 @Preview(uiMode = Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
-fun ArticlesScreenScaffoldPreview() {
+fun ArticlesScreenContentInitState() {
     NewsAppTheme {
-        val snackbarHostState = remember { SnackbarHostState() }
-
-        LaunchedEffect(Unit) {
-            snackbarHostState.showSnackbar(
-                visuals = SnackbarParams(
-                    message = "Query field is empty",
-                    duration = SnackbarDuration.Short,
-                    isError = false
-                )
-            )
-        }
-
-        ArticleListScaffold(
-            snackbarHostState = snackbarHostState,
-            onRefreshClick = { },
-            onDatePickerClick = { },
-            onQueryChange = { },
-            query = "Android"
-        ) {
-
-        }
-    }
-}
-
-
-@Preview(uiMode = Configuration.UI_MODE_TYPE_NORMAL)
-@Composable
-fun ArticlesScreenScaffoldErrorPreview() {
-    NewsAppTheme {
-        val snackbarHostState = remember { SnackbarHostState() }
-
-        LaunchedEffect(Unit) {
-            snackbarHostState.showSnackbar(
-                visuals = SnackbarParams(
-                    message = "Failed to load articles",
-                    duration = SnackbarDuration.Short,
-                    isError = true
-                )
-            )
-        }
-
-        ArticleListScaffold(
-            snackbarHostState = snackbarHostState,
-            onRefreshClick = { },
-            onDatePickerClick = { },
-            onQueryChange = { },
-            query = "Android"
-        ) {
-
-        }
+        ArticleListContent(
+            uiState = ArticleListState(),
+            uiEvent = null,
+            onArticleClick = { },
+            onAction = { }
+        )
     }
 }
 

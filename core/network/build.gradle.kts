@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -9,7 +11,6 @@ android {
 
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
-
         buildConfigField("String", "APP_KEY", "\"e37b45e0ef5a424ba70f661b228d6d63\"")
         buildConfigField("String", "BASE_URL", "\"https://newsapi.org/\"")
     }
@@ -22,10 +23,10 @@ android {
     buildFeatures {
         buildConfig = true
     }
+}
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
+kotlin {
+    jvmToolchain(11)
 }
 
 dependencies {

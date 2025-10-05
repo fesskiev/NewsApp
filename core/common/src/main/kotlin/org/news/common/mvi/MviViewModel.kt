@@ -10,7 +10,7 @@ import kotlin.uuid.Uuid
 
 data class UiEvent<E>(
     val event: E,
-    val id: String
+    val id: String = Uuid.random().toString()
 )
 
 abstract class MviViewModel<S, A, E>(

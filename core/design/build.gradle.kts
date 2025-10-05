@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "org.news.feed"
+    namespace = "org.news.design"
 
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
@@ -19,11 +19,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-
-    kotlinOptions {
-        jvmTarget = "11"
-    }
 }
+
+kotlin {
+    jvmToolchain(11)
+}
+
 
 dependencies {
     api(project(":core:common"))

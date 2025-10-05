@@ -12,8 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.news.common.test.TestTag.SNACKBAR
 
 data class SnackbarParams(
     override val message: String,
@@ -35,6 +37,7 @@ fun Snackbar(
 
         Snackbar(
             modifier = Modifier
+                .testTag(SNACKBAR)
                 .padding(12.dp)
                 .height(52.dp),
             containerColor = containerColor,

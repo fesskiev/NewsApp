@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class)
 
 package org.news
 
@@ -37,19 +37,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 import org.news.common.mvi.UiEvent
+import org.news.common.test.TestTag.ARTICLE_LIST
+import org.news.common.test.TestTag.DATE_PICKER_ICON
+import org.news.common.test.TestTag.LOADING_INDICATOR
+import org.news.common.test.TestTag.REFRESH_ICON
+import org.news.common.test.TestTag.SEARCH_FIELD
 import org.news.design.NewsAppTheme
 import org.news.design.components.DateRangePickerDialog
 import org.news.design.components.Snackbar
 import org.news.design.components.SnackbarParams
 import org.news.feed.R
 import org.news.model.Article
-import kotlin.uuid.ExperimentalUuidApi
 
 @Composable
 fun ArticleListRoute(
@@ -84,52 +89,28 @@ internal fun ArticleListContent(
     onAction: (ArticleListAction) -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(uiEvent) {
-        val currentEvent = uiEvent?.event ?: return@LaunchedEffect
-        when (currentEvent) {
-            ArticleListEvent.EmptyQuery -> snackbarHostState.showSnackbar(
-                visuals = SnackbarParams(
-                    message = "Query field is empty",
-                    duration = SnackbarDuration.Short,
-                    isError = false
-                )
-            )
-
-            is ArticleListEvent.Error -> snackbarHostState.showSnackbar(
-                visuals = SnackbarParams(
-                    message = "Failed to load articles: ${currentEvent.message}",
-                    duration = SnackbarDuration.Short,
-                    isError = true
-                )
-            )
-
-            ArticleListEvent.EmptyArticlesResponse -> snackbarHostState.showSnackbar(
-                visuals = SnackbarParams(
-                    message = "No articles founded",
-                    duration = SnackbarDuration.Short,
-                    isError = false
-                )
-            )
-        }
-    }
 
     ArticleListScaffold(
-        snackbarHostState = snackbarHostState,
+        uiEvent = uiEvent,
         onRefreshClick = { onAction(ArticleListAction.RefreshArticles) },
         onDatePickerClick = { showDatePicker = !showDatePicker },
         onQueryChange = { onAction(ArticleListAction.UpdateQuery(it)) },
-        query = uiState.query
+        query = uiState.query,
+        isLoading = uiState.isLoading
     ) {
-        ArticleList(
-            articles = uiState.articles,
-            onArticleClick = onArticleClick
-        )
+        val articles = uiState.articles
+        if (articles.isNotEmpty()) {
+            ArticleList(
+                articles = articles,
+                onArticleClick = onArticleClick
+            )
+        }
 
         if (uiState.isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.size(80.dp)
+                modifier = Modifier
+                    .size(80.dp)
+                    .testTag(LOADING_INDICATOR)
             )
         }
 
@@ -148,14 +129,44 @@ internal fun ArticleListContent(
 }
 
 @Composable
-private fun ArticleListScaffold(
-    snackbarHostState: SnackbarHostState,
+internal fun ArticleListScaffold(
+    uiEvent: UiEvent<ArticleListEvent>?,
     onRefreshClick: () -> Unit,
     onDatePickerClick: () -> Unit,
     onQueryChange: (String) -> Unit,
     query: String,
-    content: @Composable () -> Unit
+    isLoading: Boolean,
+    content: @Composable (() -> Unit)
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiEvent) {
+        val currentEvent = uiEvent?.event ?: return@LaunchedEffect
+        when (currentEvent) {
+            ArticleListEvent.EmptyQuery -> snackbarHostState.showSnackbar(
+                visuals = SnackbarParams(
+                    message = "Search field is empty",
+                    duration = SnackbarDuration.Short,
+                    isError = false
+                )
+            )
+            ArticleListEvent.EmptyArticlesResponse -> snackbarHostState.showSnackbar(
+                visuals = SnackbarParams(
+                    message = "No articles founded",
+                    duration = SnackbarDuration.Short,
+                    isError = false
+                )
+            )
+            is ArticleListEvent.Error -> snackbarHostState.showSnackbar(
+                visuals = SnackbarParams(
+                    message = "Failed to load articles: ${currentEvent.message}",
+                    duration = SnackbarDuration.Short,
+                    isError = true
+                )
+            )
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -163,7 +174,10 @@ private fun ArticleListScaffold(
                     TextField(
                         value = query,
                         onValueChange = { onQueryChange(it) },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .testTag(SEARCH_FIELD)
+                            .fillMaxWidth(),
+                        enabled = !isLoading,
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surface,
                             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -174,7 +188,10 @@ private fun ArticleListScaffold(
                 },
                 actions = {
                     IconButton(
-                        onClick = { onDatePickerClick() }
+                        onClick = { onDatePickerClick() },
+                        modifier = Modifier
+                            .testTag(DATE_PICKER_ICON),
+                        enabled = !isLoading
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_date_range),
@@ -183,7 +200,10 @@ private fun ArticleListScaffold(
                         )
                     }
                     IconButton(
-                        onClick = { onRefreshClick() }
+                        onClick = { onRefreshClick() },
+                        modifier = Modifier
+                            .testTag(REFRESH_ICON),
+                        enabled = !isLoading
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_refresh),
@@ -216,7 +236,11 @@ private fun ArticleList(
     articles: List<Article>,
     onArticleClick: (Article) -> Unit
 ) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(
+        modifier = Modifier
+            .testTag(ARTICLE_LIST)
+            .fillMaxSize()
+    ) {
         items(articles) { article ->
             ListItem(
                 headlineContent = {
@@ -247,7 +271,7 @@ private fun ArticleList(
 
 @Preview(uiMode = Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
-fun ArticlesScreenContentInitState() {
+fun ArticleListContentInitState() {
     NewsAppTheme {
         ArticleListContent(
             uiState = ArticleListState(),

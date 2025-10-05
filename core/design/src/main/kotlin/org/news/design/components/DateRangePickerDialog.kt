@@ -9,8 +9,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.news.common.test.TestTag.DATE_PICKER_DIALOG
 
 @Composable
 fun DateRangePickerDialog(
@@ -41,6 +43,7 @@ fun DateRangePickerDialog(
                 Text("OK", fontSize = 16.sp)
             }
         },
+        modifier = Modifier.testTag(DATE_PICKER_DIALOG),
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel", fontSize = 16.sp)

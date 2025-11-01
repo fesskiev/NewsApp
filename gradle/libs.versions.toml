@@ -7,7 +7,6 @@ android-targetSdk = "36"
 kotlin = "2.2.20"
 junit = "4.13.2"
 composeBom = "2025.09.01"
-jetbrainsKotlinJvm = "2.2.20"
 mockk = "1.14.6"
 ktor = "3.3.1"
 koin = "4.1.0"
@@ -57,7 +56,7 @@ koin-compose-viewmodel-navigation = { module = "io.insert-koin:koin-compose-view
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 

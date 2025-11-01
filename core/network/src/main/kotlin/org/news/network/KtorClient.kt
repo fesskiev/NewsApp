@@ -71,7 +71,7 @@ internal fun buildKtorClient(
     HttpResponseValidator {
         validateResponse { response ->
             if (!response.status.isSuccess()) {
-                val errorBody: ApiError = try {
+                val apiError: ApiError = try {
                     response.body()
                 } catch (e: Exception) {
                     ApiError(
@@ -80,7 +80,7 @@ internal fun buildKtorClient(
                         message = e.message ?: "Unknown error"
                     )
                 }
-                throw ApiException(errorBody)
+                throw ApiException(apiError)
             }
         }
     }

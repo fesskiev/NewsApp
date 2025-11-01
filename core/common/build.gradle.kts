@@ -7,6 +7,9 @@ android {
     namespace = "org.news.common"
 
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

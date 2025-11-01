@@ -5,22 +5,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.news.common.date.toDateString
 import org.news.common.mvi.MviViewModel
-import org.news.common.utils.executeWithTryCatch
 import org.news.data.NewsRepository
 import org.news.model.Article
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlin.time.Duration.Companion.days
-
-private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT)
+import org.news.common.utils.Result
 
 private val nowMillis = System.currentTimeMillis()
 private val today = nowMillis
 private val yesterday = nowMillis - 1.days.inWholeMilliseconds
-
-private fun Long.toDateString(): String = dateFormatter.format(Date(this))
 
 data class ArticleListState(
     val articles: List<Article> = emptyList(),
@@ -54,13 +48,18 @@ internal class ArticleListViewModel(
         when (action) {
             is ArticleListAction.RefreshArticles -> refreshArticles()
             is ArticleListAction.UpdateQuery -> updateQuery(action.query)
-            is ArticleListAction.UpdateDateRange -> uiState.update {
-                it.copy(
-                    from = action.from,
-                    to = action.to
-                )
-            }
+            is ArticleListAction.UpdateDateRange -> updateDateRange(action.from, action.to)
         }
+    }
+
+    private fun updateDateRange(from: Long, to: Long) {
+        uiState.update {
+            it.copy(
+                from = from,
+                to = to
+            )
+        }
+        refreshArticles()
     }
 
     private fun refreshArticles() {
@@ -91,23 +90,24 @@ internal class ArticleListViewModel(
 
     private suspend fun fetchArticles(query: String) {
         with(uiState) {
-            executeWithTryCatch {
-                update { it.copy(isLoading = true) }
-                val articles = repository.searchNews(
-                    query = query,
-                    from = value.from.toDateString(),
-                    to = value.to.toDateString()
-                )
-                if (articles.isEmpty()) {
-                    emitUiEvent(ArticleListEvent.EmptyArticlesResponse)
-                    update { it.copy(isLoading = false) }
-                } else {
+            update { it.copy(isLoading = true) }
+            val result = repository.searchNews(
+                query = query,
+                from = value.from.toDateString(),
+                to = value.to.toDateString()
+            )
+            when (result) {
+                is Result.Success -> {
+                    val articles = result.data
+                    if (articles.isEmpty()) {
+                        emitUiEvent(ArticleListEvent.EmptyArticlesResponse)
+                    }
                     update { it.copy(articles = articles, isLoading = false) }
                 }
-
-            }.onFailure { failure ->
-                update { it.copy(isLoading = false) }
-                emitUiEvent(ArticleListEvent.Error(message = failure.message))
+                is Result.Failure -> {
+                    update { it.copy(isLoading = false) }
+                    emitUiEvent(ArticleListEvent.Error(message = result.error.message))
+                }
             }
         }
     }

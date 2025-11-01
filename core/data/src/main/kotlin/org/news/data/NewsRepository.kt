@@ -1,13 +1,11 @@
 package org.news.data
 
-import kotlinx.serialization.json.Json
 import org.news.common.utils.Result
 import org.news.model.Article
 import org.news.model.Error
+import org.news.network.ApiException
 import org.news.network.NewsApiService
 import org.news.network.mapToDomainArticles
-import org.news.network.model.ApiError
-import retrofit2.Response
 import kotlin.coroutines.cancellation.CancellationException
 
 interface NewsRepository {
@@ -49,6 +47,7 @@ internal class NewsRepositoryImpl(
                 cache[cacheKey] = articles
                 Result.Success(articles)
             }
+
             is Result.Failure -> result
         }
     }
@@ -62,35 +61,15 @@ internal class NewsRepositoryImpl(
         return cache.remove(cacheKey) != null
     }
 
-    private suspend fun <T> safeApiCall(
-        apiCall: suspend () -> Response<T>,
-    ): Result<T, Error> = try {
-        val response = apiCall()
-        if (response.isSuccessful) {
-            val body = response.body()
-                ?: throw IllegalStateException("Empty response body")
-            Result.Success(body)
-        } else {
-            Result.Failure(Error(message = response.getErrorMessage()))
+    suspend fun <T> safeApiCall(block: suspend () -> T): Result<T, Error> {
+        return try {
+            Result.Success(block())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: ApiException) {
+            Result.Failure(Error(message = e.error.message))
+        } catch (e: Exception) {
+            Result.Failure(Error(message = e.message ?: "Unknown error"))
         }
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Throwable) {
-        Result.Failure(Error(e.message ?: "Unknown error"))
     }
-
-    private fun <T> Response<T>.getErrorMessage(): String {
-        val errorBody = errorBody()?.string()
-        val message: String = if (errorBody != null) {
-            try {
-                Json.decodeFromString<ApiError>(errorBody).message
-            } catch (e: Exception) {
-                "Can't decode error body" + e.message
-            }
-        } else {
-            "Error body is empty"
-        }
-        return message
-    }
-
 }

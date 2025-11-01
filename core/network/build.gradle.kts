@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -12,7 +10,7 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         buildConfigField("String", "APP_KEY", "\"e37b45e0ef5a424ba70f661b228d6d63\"")
-        buildConfigField("String", "BASE_URL", "\"https://newsapi.org/\"")
+        buildConfigField("String", "BASE_URL", "\"newsapi.org\"")
     }
 
     compileOptions {
@@ -32,13 +30,11 @@ kotlin {
 dependencies {
     api(project(":core:model"))
 
-    implementation(libs.kotlinx.serialization.json)
-
-    implementation(libs.okhttp)
-    implementation(libs.okhttp.logging)
-
-    implementation(libs.retrofit.core)
-    implementation(libs.retrofit.kotlin.serialization)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.koin.core)
 }

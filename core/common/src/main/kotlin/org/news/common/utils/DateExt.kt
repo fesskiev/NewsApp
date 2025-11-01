@@ -1,4 +1,4 @@
-package org.news.common.date
+package org.news.common.utils
 
 import java.text.SimpleDateFormat
 import java.util.Date

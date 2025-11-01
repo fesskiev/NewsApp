@@ -5,7 +5,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.news.common.date.toDateString
+import org.news.common.utils.toDateString
 import org.news.common.mvi.MviViewModel
 import org.news.data.NewsRepository
 import org.news.model.Article

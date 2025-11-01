@@ -1,16 +1,34 @@
 package org.news.network
 
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
 import org.news.network.model.NewsApiResponse
-import retrofit2.Response
-import retrofit2.http.GET
-import retrofit2.http.Query
 
 interface NewsApiService {
 
-    @GET("v2/everything")
     suspend fun searchNews(
-        @Query("q") query: String,
-        @Query("from") from: String,
-        @Query("to") to: String
-    ): Response<NewsApiResponse>
+      query: String,
+        from: String,
+        to: String
+    ): NewsApiResponse
+}
+
+internal class NewsApiServiceImpl(
+    private val httpClient: HttpClient
+) : NewsApiService {
+
+    override suspend fun searchNews(
+        query: String,
+        from: String,
+        to: String
+    ): NewsApiResponse {
+        return httpClient.get("/v2/everything") {
+            url {
+                parameters.append("q", query)
+                parameters.append("from", from)
+                parameters.append("to", to)
+            }
+        }.body()
+    }
 }

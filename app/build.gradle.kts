@@ -41,7 +41,6 @@ android {
 }
 
 dependencies {
-    api(project(":core:design"))
     api(project(":feature:feed"))
 
     implementation(platform(libs.androidx.compose.bom))

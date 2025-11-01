@@ -8,6 +8,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.news.data.di.databModule
 import org.news.di.newsFeed
+import org.news.navigation.di.navigationModule
 import org.news.network.di.networkModule
 
 class App : Application() {
@@ -25,6 +26,7 @@ class App : Application() {
         modules(
             networkModule,
             databModule,
+            navigationModule,
             newsFeed
         )
 }

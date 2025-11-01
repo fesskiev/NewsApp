@@ -29,6 +29,7 @@ kotlin {
 
 dependencies {
     api(project(":core:model"))
+    api(project(":core:navigation"))
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.android)

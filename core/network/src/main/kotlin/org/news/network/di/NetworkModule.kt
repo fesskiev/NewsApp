@@ -17,6 +17,9 @@ val networkModule = module {
     }
 
     single<TokenProvider> {
-        TokenProviderImpl(apiService = get())
+        TokenProviderImpl(
+            newsApiService = get(),
+            globalNavigationEventBus = get()
+        )
     }
 }

@@ -2,6 +2,8 @@ package org.news.network.token
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.news.navigation.GlobalNavigationEventBus
+import org.news.navigation.Unauthenticated
 import org.news.network.BuildConfig
 import org.news.network.NewsApiService
 
@@ -13,7 +15,8 @@ internal interface TokenProvider {
 }
 
 internal class TokenProviderImpl(
-    private val apiService: NewsApiService,
+    private val newsApiService: NewsApiService,
+    private val globalNavigationEventBus: GlobalNavigationEventBus,
     override var accessToken: String = BuildConfig.APP_KEY,
     override val refreshToken: String = BuildConfig.APP_KEY
 ) : TokenProvider {
@@ -22,10 +25,11 @@ internal class TokenProviderImpl(
 
     override suspend fun refreshToken(): String? = mutex.withLock {
         try {
-            val newTokenResponse = apiService.refreshToken(refreshToken)
+            val newTokenResponse = newsApiService.refreshToken(refreshToken)
             accessToken = newTokenResponse.accessToken
             accessToken
         } catch (e: Exception) {
+            globalNavigationEventBus.navigateTo(Unauthenticated)
             null
         }
     }

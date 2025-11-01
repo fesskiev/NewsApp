@@ -1,7 +1,6 @@
-package org.news.network
+package org.news.network.model
 
 import org.news.model.Article
-import org.news.network.model.NewsApiResponse
 
 fun NewsApiResponse.mapToDomainArticles(): List<Article> {
     return articles.map { apiArticle ->

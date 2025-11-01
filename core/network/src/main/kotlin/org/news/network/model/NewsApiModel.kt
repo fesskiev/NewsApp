@@ -33,3 +33,9 @@ data class ApiError (
     val code: String,
     val message: String
 )
+
+@Serializable
+data class TokenApiResponse (
+    val accessToken: String,
+    val refreshToken: String
+)

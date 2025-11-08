@@ -46,24 +46,13 @@ internal fun buildKtorClient(
     install(Auth) {
         bearer {
             loadTokens {
-                val provider = tokenProvider.value
-                BearerTokens(
-                    accessToken = provider.accessToken,
-                    refreshToken = provider.refreshToken
-                )
+                tokenProvider.value.bearerTokens
             }
 
             refreshTokens {
                 val provider = tokenProvider.value
-                val newToken = provider.refreshToken()
-                if (newToken != null) {
-                    BearerTokens(
-                        accessToken = provider.accessToken,
-                        refreshToken = provider.refreshToken
-                    )
-                } else {
-                    null
-                }
+                provider.refreshToken()
+                provider.bearerTokens
             }
         }
     }

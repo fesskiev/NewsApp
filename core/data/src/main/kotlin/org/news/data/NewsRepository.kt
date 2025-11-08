@@ -4,7 +4,7 @@ import org.news.common.utils.Result
 import org.news.model.Article
 import org.news.model.Error
 import org.news.network.ApiException
-import org.news.network.NewsApiService
+import org.news.network.service.NewsApiService
 import org.news.network.model.mapToDomainArticles
 import kotlin.coroutines.cancellation.CancellationException
 

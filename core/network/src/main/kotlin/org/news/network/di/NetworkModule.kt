@@ -1,9 +1,11 @@
 package org.news.network.di
 
 import org.koin.dsl.module
-import org.news.network.NewsApiService
-import org.news.network.NewsApiServiceImpl
+import org.news.network.service.NewsApiService
+import org.news.network.service.NewsApiServiceImpl
 import org.news.network.buildKtorClient
+import org.news.network.service.AuthApiService
+import org.news.network.service.AuthApiServiceImpl
 import org.news.network.token.TokenProvider
 import org.news.network.token.TokenProviderImpl
 
@@ -16,9 +18,13 @@ val networkModule = module {
         NewsApiServiceImpl(httpClient = get())
     }
 
+    single<AuthApiService> {
+        AuthApiServiceImpl(httpClient = get())
+    }
+
     single<TokenProvider> {
         TokenProviderImpl(
-            newsApiService = get(),
+            authApiService = get(),
             globalNavigationEventBus = get()
         )
     }

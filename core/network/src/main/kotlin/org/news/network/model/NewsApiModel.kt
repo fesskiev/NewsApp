@@ -26,16 +26,3 @@ data class SourceApi(
     val id: String?,
     val name: String?
 )
-
-@Serializable
-data class ApiError (
-    val status: String,
-    val code: String,
-    val message: String
-)
-
-@Serializable
-data class TokenApiResponse (
-    val accessToken: String,
-    val refreshToken: String
-)

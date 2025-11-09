@@ -4,6 +4,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import org.news.ArticleListViewModel
 
-val newsFeed = module {
+val newsFeedModule = module {
     viewModel { ArticleListViewModel(repository = get()) }
 }

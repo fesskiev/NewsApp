@@ -1,12 +1,16 @@
-package org.news.security
+package org.news.security.keys
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
 import java.security.*
 
+internal const val ANDROID_KEYSTORE_PROVIDER = "AndroidKeyStore"
+private const val SIGNATURE_ALGORITHM = "SHA256withRSA"
+private const val TAG = "KeyManagerImpl"
+
 interface KeyManager {
-    fun generateKeyPair(keyAlias: String, isUserAuthenticationRequired: Boolean = true): Boolean
+    fun generateKeyPair(keyAlias: String): Boolean
     fun getPublicKey(keyAlias: String): PublicKey?
     fun getSignatureForAuthentication(keyAlias: String): Signature?
     fun signData(signature: Signature, data: ByteArray): ByteArray?
@@ -16,13 +20,7 @@ class KeyManagerImpl(
     private val keyStore: KeyStore
 ) : KeyManager {
 
-    private companion object {
-        const val TAG = "KeyManagerImpl"
-        const val ANDROID_KEYSTORE_PROVIDER = "AndroidKeyStore"
-        const val SIGNATURE_ALGORITHM = "SHA256withRSA"
-    }
-
-    override fun generateKeyPair(keyAlias: String, isUserAuthenticationRequired: Boolean): Boolean {
+    override fun generateKeyPair(keyAlias: String): Boolean {
         return try {
             if (keyStore.containsAlias(keyAlias)) {
                 Log.w(TAG, "Key alias '$keyAlias' already exists. Skipping generation.")
@@ -40,7 +38,7 @@ class KeyManagerImpl(
             )
                 .setDigests(KeyProperties.DIGEST_SHA256)
                 .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
-                .setUserAuthenticationRequired(isUserAuthenticationRequired)
+                .setUserAuthenticationRequired(true)
                 .build()
 
             keyPairGenerator.initialize(keyGenParameterSpec)
@@ -83,5 +81,18 @@ class KeyManagerImpl(
             Log.e(TAG, "Failed to sign data", e)
             null
         }
+    }
+}
+
+fun verifySignature(publicKey: PublicKey, data: ByteArray, signature: ByteArray): Boolean {
+    return try {
+        val verifier = Signature.getInstance(SIGNATURE_ALGORITHM).apply {
+            initVerify(publicKey)
+            update(data)
+        }
+        verifier.verify(signature)
+    } catch (e: Exception) {
+        Log.e(TAG, "Verification error", e)
+        false
     }
 }

@@ -16,7 +16,7 @@ private val nowMillis = System.currentTimeMillis()
 private val today = nowMillis
 private val yesterday = nowMillis - 1.days.inWholeMilliseconds
 
-data class ArticleListState(
+internal data class ArticleListState(
     val articles: List<Article> = emptyList(),
     val isLoading: Boolean = false,
     val query: String = "",

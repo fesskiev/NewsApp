@@ -11,6 +11,7 @@ import org.news.data.di.databModule
 import org.news.di.newsFeedModule
 import org.news.navigation.di.navigationModule
 import org.news.network.di.networkModule
+import org.news.security.di.securityModule
 
 class App : Application() {
 
@@ -27,6 +28,7 @@ class App : Application() {
         modules(
             networkModule,
             databModule,
+            securityModule,
             navigationModule,
             authModule,
             newsFeedModule

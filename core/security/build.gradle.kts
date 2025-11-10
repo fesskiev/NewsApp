@@ -23,6 +23,8 @@ kotlin {
 
 
 dependencies {
+    implementation(libs.androidx.biometric)
+
     implementation(libs.koin.core)
     implementation(libs.kotlinx.coroutines.core)
 

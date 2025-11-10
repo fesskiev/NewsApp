@@ -31,6 +31,7 @@ dependencies {
     api(project(":core:common"))
     api(project(":core:data"))
     api(project(":core:design"))
+    api(project(":core:security"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)

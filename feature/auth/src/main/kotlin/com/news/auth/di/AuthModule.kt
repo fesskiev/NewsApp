@@ -1,9 +1,9 @@
 package com.news.auth.di
 
-import com.news.auth.AuthViewModel
+import com.news.auth.BiometricAuthViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val authModule = module {
-    viewModel { AuthViewModel() }
+    viewModel { BiometricAuthViewModel(keyManager = get(), biometricManager = get()) }
 }

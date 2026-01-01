@@ -26,10 +26,7 @@ class MainActivity : FragmentActivity() {
                 navigationEventBus.globalNavigation.collectAsState(initial = Unauthenticated)
                 when (globalRoute) {
                     is Unauthenticated -> AuthRoute()
-                    is Authenticated ->
-                        ArticleListRoute(
-                            onArticleClick = { }
-                        )
+                    is Authenticated -> ArticleListRoute(onArticleClick = { })
                 }
             }
         }

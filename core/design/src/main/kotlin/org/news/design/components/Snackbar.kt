@@ -16,6 +16,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.news.common.test.TestTag.SNACKBAR
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.tooling.preview.Preview
+import org.news.design.NewsAppTheme
+
 
 data class SnackbarParams(
     override val message: String,
@@ -51,5 +56,68 @@ fun Snackbar(
                 )
             }
         )
+    }
+}
+
+@Preview(name = "Default Snackbar")
+@Composable
+private fun DefaultSnackbarPreview() {
+    NewsAppTheme {
+        val snackbarHostState = remember { SnackbarHostState() }
+        LaunchedEffect(snackbarHostState) {
+            snackbarHostState.showSnackbar(SnackbarParams(message = "Operation successful!"))
+        }
+        Snackbar(snackbarHostState = snackbarHostState)
+    }
+}
+
+@Preview(name = "Snackbar with Action")
+@Composable
+private fun SnackbarWithActionPreview() {
+    NewsAppTheme {
+        val snackbarHostState = remember { SnackbarHostState() }
+        LaunchedEffect(snackbarHostState) {
+            snackbarHostState.showSnackbar(
+                SnackbarParams(
+                    message = "Item deleted.",
+                    actionLabel = "Undo"
+                )
+            )
+        }
+        Snackbar(snackbarHostState = snackbarHostState)
+    }
+}
+
+@Preview(name = "Dismissible Snackbar")
+@Composable
+private fun DismissibleSnackbarPreview() {
+    NewsAppTheme {
+        val snackbarHostState = remember { SnackbarHostState() }
+        LaunchedEffect(snackbarHostState) {
+            snackbarHostState.showSnackbar(
+                SnackbarParams(
+                    message = "New update available.",
+                    withDismissAction = true
+                )
+            )
+        }
+        Snackbar(snackbarHostState = snackbarHostState)
+    }
+}
+
+@Preview(name = "Error Snackbar")
+@Composable
+private fun ErrorSnackbarPreview() {
+    NewsAppTheme {
+        val snackbarHostState = remember { SnackbarHostState() }
+        LaunchedEffect(snackbarHostState) {
+            snackbarHostState.showSnackbar(
+                SnackbarParams(
+                    message = "Failed to load data.",
+                    isError = true
+                )
+            )
+        }
+        Snackbar(snackbarHostState = snackbarHostState)
     }
 }

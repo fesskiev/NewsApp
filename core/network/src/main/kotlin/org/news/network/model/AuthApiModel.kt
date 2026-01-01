@@ -3,22 +3,32 @@ package org.news.network.model
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class LoginApiRequest(
+    val username: String,
+    val password: String
+)
+
+@Serializable
 data class BiometricRegistrationApiRequest(
     val userId: String,
-    val publicKey: String,
-    val deviceId: String
+    val publicKey: String
 )
 
 @Serializable
-data class BiometricAuthApiRequest(
+data class BiometricLoginApiRequest(
     val userId: String,
-    val signature: String,
-    val deviceId: String,
-    val timestamp: Long
+    val data: String,
+    val signature: String
 )
 
 @Serializable
-data class TokenApiResponse (
+data class AuthApiResponse (
+    val userId: String,
     val accessToken: String,
+    val refreshToken: String
+)
+
+@Serializable
+data class RefreshTokenApiRequest(
     val refreshToken: String
 )

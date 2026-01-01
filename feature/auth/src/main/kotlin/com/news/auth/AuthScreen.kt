@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package com.news.auth
 
 import android.content.Intent
@@ -29,6 +31,10 @@ import org.news.common.test.TestTag.LOADING_INDICATOR
 import org.news.design.components.Snackbar
 import org.news.design.components.SnackbarParams
 import java.security.Signature
+import androidx.compose.ui.tooling.preview.Preview
+import com.news.auth.AuthAction.*
+import org.news.design.NewsAppTheme
+import kotlin.uuid.ExperimentalUuidApi
 
 @Composable
 fun AuthRoute() {
@@ -39,51 +45,38 @@ fun AuthRoute() {
 private fun BiometricAuthScreen(
     viewModel: BiometricAuthViewModel = koinViewModel()
 ) {
-    val activity = LocalContext.current as FragmentActivity
-
     val uiState by viewModel.uiState.collectAsState()
     val uiEvent by viewModel.uiEvent.collectAsState(null)
 
-    BiometricAuthScaffold(uiEvent) {
-        when (val biometricState = uiState.biometricState) {
-            is BiometricState.Enable -> {
-                val biometricAuthenticator = rememberBiometricAuthenticator(
-                    activity,
-                    signature = biometricState.signature,
-                    onSuccess = {
-                        viewModel.onAction(AuthAction.BiometricAuthenticated(it))
-                    },
-                    onError = { error ->
-                        viewModel.onAction(AuthAction.BiometricAuthenticatorError(error))
-                    }
-                )
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        viewModel.onAction(CheckBiometricEnable)
+    }
 
-                BiometricAuthScreenContent(
-                    state = uiState,
-                    onEmailChange = { viewModel.onAction(AuthAction.EmailChange(it)) },
-                    onBiometricClick = { biometricAuthenticator() }
-                )
-            }
-
-            BiometricState.Disable -> {
-                val launcher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.StartActivityForResult()
-                ) {
-                    viewModel.onAction(AuthAction.CheckBiometricEnable)
-                }
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Button(onClick = {
-                        launcher.launch(createSettingIntent())
-                    }) {
-                        Text("Enable Biometrics")
-                    }
-                }
-            }
+    val biometricAuthenticator = rememberBiometricAuthenticator(
+        activity= LocalContext.current as FragmentActivity,
+        onSuccess = {
+            viewModel.onAction(BiometricAuthenticated(it))
+        },
+        onError = { error ->
+            viewModel.onAction(BiometricAuthenticatorError(error))
         }
+    )
+
+    BiometricAuthScaffold(uiEvent) {
+        BiometricAuthContent(
+            uiState,
+            onAction = { action ->
+                when (action) {
+                    is BiometricAuthenticate -> biometricAuthenticator(action.signature)
+                    EnableBiometricClick -> launcher.launch(createSettingIntent())
+                        .also { println("EnableBiometricClick") }
+
+                    else -> viewModel.onAction(action)
+                }
+            }
+        )
     }
 }
 
@@ -131,16 +124,15 @@ private fun BiometricAuthScaffold(
 
 
 @Composable
-private fun BiometricAuthScreenContent(
-    state: AuthState,
-    onEmailChange: (String) -> Unit,
-    onBiometricClick: () -> Unit
+private fun BiometricAuthContent(
+    uiState: AuthState,
+    onAction: (AuthAction) -> Unit
 ) {
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -148,33 +140,66 @@ private fun BiometricAuthScreenContent(
             Spacer(modifier = Modifier.height(32.dp))
 
             OutlinedTextField(
-                value = state.email,
-                onValueChange = onEmailChange,
+                value = uiState.email,
+                onValueChange = { onAction(EmailChange(it)) },
                 label = { Text("Email (used as User ID)") },
                 modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading,
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = uiState.password,
+                onValueChange = { onAction(EmailChange(it)) },
+                label = { Text("Password") },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading,
                 singleLine = true
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (state.isLoading) {
+            if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .size(80.dp)
                         .testTag(LOADING_INDICATOR)
                 )
             } else {
-                Button(
-                    onClick = onBiometricClick,
-                    enabled = state.email.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_fingerprint),
-                        contentDescription = "Biometric Login"
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Login with Biometrics")
+                when (val biometricState = uiState.biometricState) {
+                    is BiometricState.Enable -> {
+                        Button(
+                            onClick = { onAction(BiometricAuthenticate(biometricState.signature)) },
+                            enabled = uiState.email.isNotBlank(),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_fingerprint),
+                                contentDescription = "Biometric Login"
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Login with Biometrics")
+                        }
+                    }
+
+                    BiometricState.Disable -> {
+                        Button(onClick = { onAction(EnableBiometricClick) }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_fingerprint),
+                                contentDescription = "Biometric Login"
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Enable Biometrics?")
+                        }
+                    }
+
+                    BiometricState.Unavailable -> {
+                        Button(onClick = { }) {
+                            Text("Login with Password")
+                        }
+                    }
                 }
             }
         }
@@ -184,10 +209,9 @@ private fun BiometricAuthScreenContent(
 @Composable
 private fun rememberBiometricAuthenticator(
     activity: FragmentActivity,
-    signature: Signature,
     onSuccess: (Signature) -> Unit,
     onError: (String) -> Unit
-): () -> Unit {
+): (Signature) -> Unit {
     val biometricPrompt = remember {
         BiometricPrompt(
             activity,
@@ -218,9 +242,12 @@ private fun rememberBiometricAuthenticator(
             .build()
     }
 
-    val crypto = BiometricPrompt.CryptoObject(signature)
-
-    return remember { { biometricPrompt.authenticate(promptInfo, crypto) } }
+    return remember {
+        { signature ->
+            val crypto = BiometricPrompt.CryptoObject(signature)
+            biometricPrompt.authenticate(promptInfo, crypto)
+        }
+    }
 }
 
 private fun createSettingIntent(): Intent = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
@@ -231,5 +258,79 @@ private fun createSettingIntent(): Intent = if (Build.VERSION.SDK_INT < Build.VE
             Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
             BiometricManager.Authenticators.BIOMETRIC_STRONG
         )
+    }
+}
+
+@Preview(name = "Biometric Enable")
+@Composable
+private fun ContentBiometricEnable() {
+    NewsAppTheme {
+        BiometricAuthContent(
+            uiState = AuthState(
+                email = "test@example.com",
+                password = "qwerty",
+                biometricState = BiometricState.Enable(Signature.getInstance("SHA256withRSA")),
+                isLoading = false
+            ),
+            onAction = { }
+        )
+    }
+}
+
+@Preview(name = "Biometric Disable")
+@Composable
+private fun ContentBiometricDisable() {
+    NewsAppTheme {
+        BiometricAuthContent(
+            uiState = AuthState(
+                email = "test@example.com",
+                biometricState = BiometricState.Disable,
+                isLoading = false
+            ),
+            onAction = { }
+        )
+    }
+}
+
+@Preview(name = "Biometric Unavailable")
+@Composable
+private fun ContentBiometricUnavailable() {
+    NewsAppTheme {
+        BiometricAuthContent(
+            uiState = AuthState(
+                email = "test@example.com",
+                biometricState = BiometricState.Unavailable,
+                isLoading = false
+            ),
+            onAction = { }
+        )
+    }
+}
+
+@Preview(name = "Loading")
+@Composable
+private fun ContentLoading() {
+    NewsAppTheme {
+        BiometricAuthContent(
+            uiState = AuthState(
+                email = "test@example.com",
+                biometricState = BiometricState.Enable(Signature.getInstance("SHA256withRSA")),
+                isLoading = true
+            ),
+            onAction = { }
+        )
+    }
+}
+
+@Preview(name = "Error Event")
+@Composable
+private fun ScaffoldErrorEvent() {
+    val event = AuthEvent.BiometricAuthenticatorError("Sample Error Message")
+    NewsAppTheme {
+        BiometricAuthScaffold(
+            uiEvent = UiEvent(event)
+        ) {
+
+        }
     }
 }

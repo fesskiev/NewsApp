@@ -1,15 +1,17 @@
 package org.news.data
 
+import org.news.common.utils.Result
 import org.news.network.model.AuthApiResponse
 import org.news.network.service.AuthApiService
+import org.news.model.Error
 
 interface AuthRepository {
 
-    suspend fun login(username: String, password: String): AuthApiResponse
+    suspend fun login(username: String, password: String): Result<AuthApiResponse, Error>
 
-    suspend fun registerBiometric(userId: String, publicKey: String): AuthApiResponse
+    suspend fun registerBiometric(userId: String, publicKey: String): Result<AuthApiResponse, Error>
 
-    suspend fun loginBiometric(userId: String, data: String, signature: String): AuthApiResponse
+    suspend fun loginBiometric(userId: String, data: String, signature: String): Result<AuthApiResponse, Error>
 }
 
 internal class AuthRepositoryImpl(
@@ -19,18 +21,18 @@ internal class AuthRepositoryImpl(
     override suspend fun login(
         username: String,
         password: String
-    ) = authApiService.login(username, password)
+    ) = safeApiCall {authApiService.login(username, password) }
 
 
     override suspend fun registerBiometric(
         userId: String,
         publicKey: String
-    ) = authApiService.registerBiometric(userId, publicKey)
+    ) = safeApiCall {  authApiService.registerBiometric(userId, publicKey) }
 
     override suspend fun loginBiometric(
         userId: String,
         data: String,
         signature: String
-    ) = authApiService.loginBiometric(userId, data, signature)
+    ) = safeApiCall { authApiService.loginBiometric(userId, data, signature) }
 
 }

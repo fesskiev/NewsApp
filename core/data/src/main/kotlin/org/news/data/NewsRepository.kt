@@ -3,10 +3,8 @@ package org.news.data
 import org.news.common.utils.Result
 import org.news.model.Article
 import org.news.model.Error
-import org.news.network.ApiException
 import org.news.network.service.NewsApiService
 import org.news.network.model.mapToDomainArticles
-import kotlin.coroutines.cancellation.CancellationException
 
 interface NewsRepository {
 
@@ -59,17 +57,5 @@ internal class NewsRepositoryImpl(
     ): Boolean {
         val cacheKey = "$query|$from|$to"
         return cache.remove(cacheKey) != null
-    }
-
-    suspend fun <T> safeApiCall(block: suspend () -> T): Result<T, Error> {
-        return try {
-            Result.Success(block())
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: ApiException) {
-            Result.Failure(Error(message = e.error.message))
-        } catch (e: Exception) {
-            Result.Failure(Error(message = e.message ?: "Unknown error"))
-        }
     }
 }

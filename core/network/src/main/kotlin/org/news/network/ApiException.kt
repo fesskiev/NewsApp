@@ -1,5 +1,5 @@
 package org.news.network
 
-import org.news.network.model.ApiError
+import org.news.network.model.ApiErrorResponse
 
-class ApiException(val error: ApiError) : Exception(error.message)
+class ApiException(val error: ApiErrorResponse) : Exception(error.message)

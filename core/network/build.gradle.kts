@@ -8,9 +8,24 @@ android {
     namespace = "org.news.network"
 
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+
     defaultConfig {
         buildConfigField("String", "APP_KEY", "\"e37b45e0ef5a424ba70f661b228d6d63\"")
         buildConfigField("String", "BASE_URL", "\"newsapi.org\"")
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField("boolean", "USE_MOCKS", "false")
+        }
+
+        create("mock") {
+            buildConfigField("boolean", "USE_MOCKS", "true")
+        }
+
+        release {
+            buildConfigField("boolean", "USE_MOCKS", "false")
+        }
     }
 
     compileOptions {
@@ -39,4 +54,6 @@ dependencies {
     implementation(libs.ktor.client.auth)
 
     implementation(libs.koin.core)
+
+    implementation(libs.ktor.client.mock)
 }

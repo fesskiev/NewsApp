@@ -4,19 +4,19 @@ android-compileSdk = "36"
 android-minSdk = "24"
 android-targetSdk = "36"
 
-kotlin = "2.2.20"
+kotlin = "2.3.0"
 junit = "4.13.2"
-composeBom = "2025.09.01"
-mockk = "1.14.6"
-ktor = "3.3.1"
-koin = "4.1.0"
-koinAndroid = "4.0.3"
-koinCompose = "4.0.3"
-koinComposeViewmodel = "4.0.3"
-koinComposeViewmodelNavigation = "4.0.3"
-kotlinxCoroutines = "1.10.1"
-androidx-lifecycle = "2.9.1"
-uiTestJunit4 = "1.9.2"
+composeBom = "2025.12.01"
+mockk = "1.14.7"
+ktor = "3.3.3"
+koin = "4.1.1"
+koinAndroid = "4.1.1"
+koinCompose = "4.1.1"
+koinComposeViewmodel = "4.1.1"
+koinComposeViewmodelNavigation = "4.1.1"
+kotlinxCoroutines = "1.10.2"
+androidx-lifecycle = "2.9.6"
+uiTestJunit4 = "1.10.0"
 biometric = "1.2.0-alpha05"
 
 [libraries]
@@ -40,6 +40,7 @@ ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "k
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 
 
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }

@@ -23,7 +23,7 @@ internal fun buildMockKtorEngine(): MockEngine {
                 val jsonElement = Json.parseToJsonElement(requestBody)
                 val username = jsonElement.jsonObject["user name"]?.jsonPrimitive?.content
                 val password = jsonElement.jsonObject["password"]?.jsonPrimitive?.content
-                if (username == "testuser" && password == "testpass") {
+                if (username == "test@gmail.com" && password == "qwerty") {
                     val responseJson = Json.encodeToString(AuthApiResponse.serializer(), successAuthResponse)
                     respond(
                         content = ByteReadChannel(responseJson),

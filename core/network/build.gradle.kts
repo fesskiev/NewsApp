@@ -14,20 +14,6 @@ android {
         buildConfigField("String", "BASE_URL", "\"newsapi.org\"")
     }
 
-    buildTypes {
-        debug {
-            buildConfigField("boolean", "USE_MOCKS", "false")
-        }
-
-        create("mock") {
-            buildConfigField("boolean", "USE_MOCKS", "true")
-        }
-
-        release {
-            buildConfigField("boolean", "USE_MOCKS", "false")
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

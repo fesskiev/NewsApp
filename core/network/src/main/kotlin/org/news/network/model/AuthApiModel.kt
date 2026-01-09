@@ -22,13 +22,13 @@ data class BiometricLoginApiRequest(
 )
 
 @Serializable
-data class AuthApiResponse (
-    val userId: String,
-    val accessToken: String,
+data class RefreshTokenApiRequest(
     val refreshToken: String
 )
 
 @Serializable
-data class RefreshTokenApiRequest(
+data class AuthApiResponse (
+    val userId: String,
+    val accessToken: String,
     val refreshToken: String
 )

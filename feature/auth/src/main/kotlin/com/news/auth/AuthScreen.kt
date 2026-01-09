@@ -166,7 +166,7 @@ private fun AuthContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { },
+                onClick = { onAction(LoginClick)},
                 modifier = Modifier.fillMaxWidth(),
                 enabled = uiState.isLoginButtonEnable,
             ) {

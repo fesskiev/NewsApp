@@ -3,22 +3,22 @@ package org.news.security.keys
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
+import org.news.security.di.ANDROID_KEYSTORE_PROVIDER
 import java.security.*
 
-internal const val ANDROID_KEYSTORE_PROVIDER = "AndroidKeyStore"
 private const val SIGNATURE_ALGORITHM = "SHA256withRSA"
-private const val TAG = "KeyManagerImpl"
+private const val TAG = "BiometricAuthenticationKeyManager"
 
-interface KeyManager {
+interface BiometricAuthenticationKeyManager {
     fun generateKeyPair(keyAlias: String): Boolean
     fun getPublicKey(keyAlias: String): PublicKey?
     fun getSignatureForAuthentication(keyAlias: String): Signature?
     fun signData(signature: Signature, data: ByteArray): ByteArray?
 }
 
-class KeyManagerImpl(
+class BiometricAuthenticationKeyManagerImpl(
     private val keyStore: KeyStore
-) : KeyManager {
+) : BiometricAuthenticationKeyManager {
 
     override fun generateKeyPair(keyAlias: String): Boolean {
         return try {
@@ -39,6 +39,7 @@ class KeyManagerImpl(
                 .setDigests(KeyProperties.DIGEST_SHA256)
                 .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
                 .setUserAuthenticationRequired(true)
+                .setUserAuthenticationParameters(30, KeyProperties.AUTH_BIOMETRIC_STRONG)
                 .build()
 
             keyPairGenerator.initialize(keyGenParameterSpec)

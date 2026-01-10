@@ -2,13 +2,13 @@ package com.news.auth
 
 import android.util.Base64
 import androidx.lifecycle.viewModelScope
-import com.news.auth.AuthEvent.*
-import com.news.auth.AuthEvent.SnackbarEvent.*
+import com.news.auth.LoginEvent.*
+import com.news.auth.LoginEvent.SnackbarEvent.*
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.news.data.AuthRepository
 import org.news.common.mvi.MviViewModel
-import org.news.security.keys.KeyManager
+import org.news.security.keys.BiometricAuthenticationKeyManager
 import org.news.security.biometric.BiometricManager
 import org.news.security.biometric.BiometricStatus
 import org.news.security.keys.verifySignature
@@ -16,7 +16,7 @@ import java.security.Signature
 
 private const val KEY_ALIAS = "BiometricAuth"
 
-internal data class AuthState(
+internal data class LoginState(
     val isLoading: Boolean = false,
     val biometricState: BiometricState = BiometricState.Disable,
     val email: String = "test@gmail.com",
@@ -38,50 +38,60 @@ internal sealed interface BiometricState {
     data object Unavailable : BiometricState
 }
 
-internal sealed interface AuthAction {
-    data class EmailChange(val email: String) : AuthAction
-    data class PasswordChange(val password: String) : AuthAction
-    data class BiometricAuthenticateClick(val signature: Signature) : AuthAction
-    data class BiometricAuthenticated(val signature: Signature) : AuthAction
-    data object EnableBiometricClick : AuthAction
-    data object LoginClick : AuthAction
-    data object CheckBiometricEnable : AuthAction
-    data class BiometricAuthenticatorError(val error: String) : AuthAction
+internal sealed interface LoginAction {
+    data class EmailChange(val email: String) : LoginAction
+    data class PasswordChange(val password: String) : LoginAction
+    data class BiometricAuthenticateClick(val signature: Signature) : LoginAction
+    data class BiometricAuthenticated(val signature: Signature) : LoginAction
+    data object EnableBiometricClick : LoginAction
+    data object LoginClick : LoginAction
+    data object CheckBiometricEnable : LoginAction
+    data class BiometricAuthenticatorError(val error: String) : LoginAction
 }
 
-internal sealed interface AuthEvent {
-    sealed interface SnackbarEvent : AuthEvent {
+internal sealed interface LoginEvent {
+    sealed interface SnackbarEvent : LoginEvent {
         data object BiometricDisable : SnackbarEvent
         data class BiometricAuthenticatorError(val error: String) : SnackbarEvent
         data object GenerateKeyPairError : SnackbarEvent
     }
 
-    data class LaunchBiometricAuthenticator(val signature: Signature) : AuthEvent
-    data object EnrollBiometric : AuthEvent
+    data class LaunchBiometricAuthenticator(val signature: Signature) : LoginEvent
+    data object EnrollBiometric : LoginEvent
 }
 
-internal class AuthViewModel(
-    private val keyManager: KeyManager,
+internal class LoginViewModel(
+    private val keyManager: BiometricAuthenticationKeyManager,
     private val biometricManager: BiometricManager,
     private val authRepository: AuthRepository
-) : MviViewModel<AuthState, AuthAction, AuthEvent>(
-    initialState = AuthState()
+) : MviViewModel<LoginState, LoginAction, LoginEvent>(
+    initialState = LoginState()
 ) {
 
     init {
         checkBiometricEnable()
     }
 
-    override fun onAction(action: AuthAction) {
+    override fun onAction(action: LoginAction) {
         when (action) {
-            is AuthAction.EmailChange -> uiState.update { it.copy(email = action.email) }
-            is AuthAction.PasswordChange -> uiState.update { it.copy(password = action.password) }
-            is AuthAction.BiometricAuthenticated -> biometricAuthenticated(action.signature)
-            is AuthAction.BiometricAuthenticatorError -> emitUiEvent(BiometricAuthenticatorError(action.error))
-            AuthAction.CheckBiometricEnable -> checkBiometricEnable()
-            is AuthAction.BiometricAuthenticateClick -> emitUiEvent(LaunchBiometricAuthenticator(action.signature))
-            AuthAction.EnableBiometricClick -> emitUiEvent(EnrollBiometric)
-            AuthAction.LoginClick -> TODO()
+            is LoginAction.EmailChange -> uiState.update { it.copy(email = action.email) }
+            is LoginAction.PasswordChange -> uiState.update { it.copy(password = action.password) }
+            is LoginAction.BiometricAuthenticated -> biometricAuthenticated(action.signature)
+            is LoginAction.BiometricAuthenticatorError -> emitUiEvent(
+                BiometricAuthenticatorError(
+                    action.error
+                )
+            )
+
+            LoginAction.CheckBiometricEnable -> checkBiometricEnable()
+            is LoginAction.BiometricAuthenticateClick -> emitUiEvent(
+                LaunchBiometricAuthenticator(
+                    action.signature
+                )
+            )
+
+            LoginAction.EnableBiometricClick -> emitUiEvent(EnrollBiometric)
+            LoginAction.LoginClick -> TODO()
         }
     }
 
@@ -147,7 +157,7 @@ internal class AuthViewModel(
             )
 
 
-            // auth
+            // login
             val dataStr = "$email:${System.currentTimeMillis()}"
             val data = dataStr.toByteArray(Charsets.UTF_8)
 

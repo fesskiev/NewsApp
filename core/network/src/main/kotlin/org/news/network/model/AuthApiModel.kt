@@ -32,3 +32,8 @@ data class AuthApiResponse (
     val accessToken: String,
     val refreshToken: String
 )
+
+@Serializable
+data class JwtPayload(
+    val exp: Long?
+)

@@ -3,6 +3,7 @@ package org.news.network.service
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import org.news.network.BuildConfig
 import org.news.network.model.NewsApiResponse
 
 interface NewsApiService {
@@ -28,6 +29,7 @@ internal class NewsApiServiceImpl(
                 parameters.append("q", query)
                 parameters.append("from", from)
                 parameters.append("to", to)
+                parameters.append("apiKey", BuildConfig.APP_KEY)
             }
         }.body()
     }

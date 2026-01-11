@@ -101,7 +101,7 @@ internal class LoginViewModel(
             val alias = KEY_ALIAS + email
             when (biometricManager.getBiometricStatus()) {
                 BiometricStatus.ENABLE -> {
-                    if (!keyManager.generateKeyPair(alias)) {
+                    if (!keyManager.generateKeyPairIfNeed(alias)) {
                         update { it.copy(biometricState = BiometricState.Unavailable) }
                         emitUiEvent(GenerateKeyPairError)
                         return

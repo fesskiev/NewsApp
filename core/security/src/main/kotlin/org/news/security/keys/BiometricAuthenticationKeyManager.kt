@@ -10,7 +10,7 @@ private const val SIGNATURE_ALGORITHM = "SHA256withRSA"
 private const val TAG = "BiometricAuthenticationKeyManager"
 
 interface BiometricAuthenticationKeyManager {
-    fun generateKeyPair(keyAlias: String): Boolean
+    fun generateKeyPairIfNeed(keyAlias: String): Boolean
     fun getPublicKey(keyAlias: String): PublicKey?
     fun getSignatureForAuthentication(keyAlias: String): Signature?
     fun signData(signature: Signature, data: ByteArray): ByteArray?
@@ -20,7 +20,7 @@ class BiometricAuthenticationKeyManagerImpl(
     private val keyStore: KeyStore
 ) : BiometricAuthenticationKeyManager {
 
-    override fun generateKeyPair(keyAlias: String): Boolean {
+    override fun generateKeyPairIfNeed(keyAlias: String): Boolean {
         return try {
             if (keyStore.containsAlias(keyAlias)) {
                 Log.w(TAG, "Key alias '$keyAlias' already exists. Skipping generation.")

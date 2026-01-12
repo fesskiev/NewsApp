@@ -45,6 +45,7 @@ dependencies {
     api(project(":feature:auth"))
     api(project(":feature:feed"))
 
+    implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
@@ -54,5 +55,4 @@ dependencies {
 
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
-    implementation(libs.koin.compose.viewmodel.navigation)
 }

@@ -1,7 +1,6 @@
 package org.news
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
@@ -12,6 +11,7 @@ import org.koin.compose.koinInject
 import org.news.design.NewsAppTheme
 import org.news.navigation.Authenticated
 import org.news.navigation.GlobalNavigationEventBus
+import org.news.navigation.Splash
 import org.news.navigation.Unauthenticated
 
 class MainActivity : FragmentActivity() {
@@ -22,9 +22,9 @@ class MainActivity : FragmentActivity() {
         setContent {
             val navigationEventBus: GlobalNavigationEventBus = koinInject()
             NewsAppTheme {
-                val globalRoute by
-                navigationEventBus.globalNavigation.collectAsState(initial = Unauthenticated)
+                val globalRoute by navigationEventBus.globalNavigation.collectAsState(initial = Splash)
                 when (globalRoute) {
+                    is Splash -> AuthRoute()
                     is Unauthenticated -> AuthRoute()
                     is Authenticated -> ArticleListRoute(onArticleClick = { })
                 }

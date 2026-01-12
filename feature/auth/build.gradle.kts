@@ -32,6 +32,7 @@ dependencies {
     api(project(":core:data"))
     api(project(":core:design"))
     api(project(":core:security"))
+    api(project(":core:storage"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -40,10 +41,12 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
     implementation(libs.koin.compose.viewmodel)
-    implementation(libs.koin.compose.viewmodel.navigation)
 
     implementation(libs.androidx.biometric)
 

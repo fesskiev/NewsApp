@@ -1,13 +1,21 @@
 package com.news.auth
 
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import com.news.auth.SplashEvent.*
 import org.news.common.mvi.MviViewModel
-import org.news.data.AuthRepository
+import org.news.model.StoredAuthData
+import org.news.model.TokenExpiryStatus
+import org.news.model.getTokenExpiryStatus
 import org.news.network.token.TokenProvider
+import org.news.security.biometric.BiometricCapability
 import org.news.security.biometric.BiometricManager
 import org.news.security.keys.GCM_IV_LENGTH
 import org.news.security.keys.TokenEncryptionKeyManager
+import org.news.storage.AuthDataStorage
+
+private const val KEY_ALIAS = "TokenKey"
 
 internal data class SplashState(
     val isLoading: Boolean = false
@@ -18,13 +26,13 @@ internal sealed interface SplashAction {
 }
 
 internal sealed interface SplashEvent {
-
+    data class LaunchBiometricAuthenticator(val authData: StoredAuthData) : SplashEvent
 }
 
 internal class SplashViewModel(
     private val keyManager: TokenEncryptionKeyManager,
     private val biometricManager: BiometricManager,
-    private val authRepository: AuthRepository,
+    private val authDataStorage: AuthDataStorage,
     private val tokenProvider: TokenProvider
 ) : MviViewModel<SplashState, SplashAction, SplashEvent>(
     initialState = SplashState()
@@ -41,6 +49,10 @@ internal class SplashViewModel(
     }
 
     private fun checkLocalAuthState() {
+        if (biometricManager.checkBiometricCapability() != BiometricCapability.AVAILABLE) {
+            navigateToLogin()
+            return
+        }
         viewModelScope.launch {
             try {
                 val alias = getAlias()
@@ -49,58 +61,59 @@ internal class SplashViewModel(
                     return@launch
                 }
 
-                val encryptedAccessToken = getEncryptedAccessTokenFromStorage()
-                val encryptedRefreshToken = getEncryptedRefreshTokenFromStorage()
+                val authData = authDataStorage.get()
+                    .firstOrNull()
+                    ?: run {
+                        navigateToLogin()
+                        return@launch
+                    }
 
-                val iv = encryptedAccessToken.copyOfRange(0, GCM_IV_LENGTH)
-                val cipher = keyManager.getCipherForDecryption(alias, iv)
-                if (cipher == null) {
-                    navigateToLogin()
-                    return@launch
-                } else {
-                    // show biometric prompt
-                }
-
-                val accessToken = keyManager.decryptToken(cipher, encryptedAccessToken)
-                val refreshToken = keyManager.decryptToken(cipher, encryptedRefreshToken)
-
-                if (accessToken == null || refreshToken == null) {
+                if (authData.getTokenExpiryStatus() == TokenExpiryStatus.BOTH_EXPIRED) {
                     navigateToLogin()
                     return@launch
                 }
 
-                tokenProvider.setTokens(accessToken, refreshToken)
-
-                if (!tokenProvider.isAccessTokenExpired()) {
-                    navigateToHome()
-                    return@launch
-                }
-
-                if (tokenProvider.isRefreshTokenExpired()) {
-                    navigateToLogin()
-                    return@launch
-                }
-
-                val isRefreshSuccess = tokenProvider.refreshToken()
-                if (isRefreshSuccess) {
-                    navigateToHome()
-                }
+                emitUiEvent(LaunchBiometricAuthenticator(authData))
             } catch (e: Exception) {
                 navigateToLogin()
             }
         }
     }
 
-    private fun getEncryptedRefreshTokenFromStorage(): ByteArray {
-        TODO("Provide the return value")
-    }
+    private suspend fun decryptTokens(authData: StoredAuthData) {
+        val alias = getAlias()
+        val encryptedAccessToken = authData.encryptedAccessToken
+        val iv = encryptedAccessToken.copyOfRange(0, GCM_IV_LENGTH)
+        val cipher = keyManager.getCipherForDecryption(alias, iv)
+        if (cipher == null) {
+            navigateToLogin()
+            return
+        }
+        val encryptedRefreshToken = authData.encryptedRefreshToken
+        val accessToken =
+            keyManager.decryptToken(cipher, encryptedAccessToken)
+        val refreshToken =
+            keyManager.decryptToken(cipher, encryptedRefreshToken)
+        if (accessToken == null || refreshToken == null) {
+            navigateToLogin()
+            return
+        }
+        tokenProvider.setTokens(accessToken, refreshToken)
+        when (authData.getTokenExpiryStatus()) {
+            TokenExpiryStatus.ACCESS_VALID -> navigateToHome()
+            TokenExpiryStatus.REFRESH_VALID -> {
+                val isRefreshSuccess = tokenProvider.refreshToken()
+                if (isRefreshSuccess) {
+                    navigateToHome()
+                }
+            }
 
-    private fun getEncryptedAccessTokenFromStorage(): ByteArray {
-        TODO("Provide the return value")
+            TokenExpiryStatus.BOTH_EXPIRED -> navigateToLogin()
+        }
     }
 
     private fun getAlias(): String {
-        TODO("Provide the return value")
+        return KEY_ALIAS + "test@gmail.com"
     }
 
     private fun navigateToHome() {

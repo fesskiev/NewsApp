@@ -2,15 +2,16 @@ package com.news.auth
 
 import android.util.Base64
 import androidx.lifecycle.viewModelScope
+import com.news.auth.BiometricState.*
 import com.news.auth.LoginEvent.*
 import com.news.auth.LoginEvent.SnackbarEvent.*
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.news.data.AuthRepository
 import org.news.common.mvi.MviViewModel
+import org.news.security.biometric.BiometricCapability
 import org.news.security.keys.BiometricAuthenticationKeyManager
 import org.news.security.biometric.BiometricManager
-import org.news.security.biometric.BiometricStatus
 import org.news.security.keys.verifySignature
 import java.security.Signature
 
@@ -18,7 +19,7 @@ private const val KEY_ALIAS = "BiometricAuth"
 
 internal data class LoginState(
     val isLoading: Boolean = false,
-    val biometricState: BiometricState = BiometricState.Disable,
+    val biometricState: BiometricState = Disable,
     val email: String = "test@gmail.com",
     val password: String = "qwerty"
 ) {
@@ -99,28 +100,26 @@ internal class LoginViewModel(
         with(uiState) {
             val email = value.email
             val alias = KEY_ALIAS + email
-            when (biometricManager.getBiometricStatus()) {
-                BiometricStatus.ENABLE -> {
+            when (biometricManager.checkBiometricCapability()) {
+                BiometricCapability.AVAILABLE -> {
                     if (!keyManager.generateKeyPairIfNeed(alias)) {
-                        update { it.copy(biometricState = BiometricState.Unavailable) }
+                        update { it.copy(biometricState = Unavailable) }
                         emitUiEvent(GenerateKeyPairError)
                         return
                     }
                     val signature = keyManager.getSignatureForAuthentication(alias)
                     if (signature == null) {
-                        update { it.copy(biometricState = BiometricState.Disable) }
+                        update { it.copy(biometricState = Unavailable) }
                         return
                     }
-                    update { it.copy(biometricState = BiometricState.Enable(signature)) }
+                    update { it.copy(biometricState = Enable(signature)) }
                 }
-
-                BiometricStatus.DISABLE -> {
-                    update { it.copy(biometricState = BiometricState.Disable) }
+                BiometricCapability.NO_ENROLLED -> {
+                    update { it.copy(biometricState = Disable) }
                     emitUiEvent(BiometricDisable)
                 }
-
-                BiometricStatus.UNAVAILABLE -> {
-                    update { it.copy(biometricState = BiometricState.Unavailable) }
+                BiometricCapability.NO_HARDWARE, BiometricCapability.TEMPORARILY_UNAVAILABLE -> {
+                    update { it.copy(biometricState = Unavailable) }
                 }
             }
         }

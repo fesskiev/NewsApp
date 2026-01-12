@@ -42,7 +42,6 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
     implementation(libs.koin.compose.viewmodel)
-    implementation(libs.koin.compose.viewmodel.navigation)
 
     androidTestImplementation (libs.androidx.compose.ui.test.junit4)
     debugImplementation (libs.androidx.compose.ui.test.manifest)

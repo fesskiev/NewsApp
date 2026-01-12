@@ -10,7 +10,7 @@ val authModule = module {
         SplashViewModel(
             keyManager = get(),
             biometricManager = get(),
-            authRepository = get(),
+            authDataStorage = get(),
             tokenProvider = get()
         )
     }

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "org.news.security"
+    namespace = "org.news.storage"
 
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
@@ -23,7 +23,10 @@ kotlin {
 
 
 dependencies {
-    implementation(libs.androidx.biometric)
+    api(project(":core:model"))
+
+    implementation(libs.androidx.datastore.core)
+    implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.koin.core)
     implementation(libs.kotlinx.coroutines.core)

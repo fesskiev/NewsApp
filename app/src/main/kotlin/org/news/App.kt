@@ -9,6 +9,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.news.data.di.databModule
 import org.news.di.newsFeedModule
+import org.news.di.storageModule
 import org.news.navigation.di.navigationModule
 import org.news.network.di.networkModule
 import org.news.security.di.securityModule
@@ -27,6 +28,7 @@ class App : Application() {
     private fun KoinApplication.koinModules() =
         modules(
             networkModule,
+            storageModule,
             databModule,
             securityModule,
             navigationModule,

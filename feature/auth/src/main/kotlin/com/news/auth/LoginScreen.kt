@@ -74,7 +74,6 @@ internal fun LoginScreen(
     }
 
     val biometricAuthenticator = rememberBiometricAuthenticator(
-        activity = LocalActivity.current as FragmentActivity,
         onSuccess = {
             viewModel.onAction(BiometricAuthenticated(it))
         },
@@ -125,7 +124,7 @@ private fun LoginScaffold(
                     isError = true
                 )
             )
-            else -> {}
+            else -> Unit
         }
     }
 
@@ -241,10 +240,10 @@ private fun LoginContent(
 
 @Composable
 private fun rememberBiometricAuthenticator(
-    activity: FragmentActivity,
     onSuccess: (Signature) -> Unit,
     onError: (String) -> Unit
 ): (Signature) -> Unit {
+    val activity = LocalActivity.current as FragmentActivity
     val biometricPrompt = remember {
         BiometricPrompt(
             activity,

@@ -6,6 +6,9 @@ import kotlinx.serialization.Serializable
 sealed interface GlobalRoute
 
 @Serializable
+data object Splash : GlobalRoute
+
+@Serializable
 data object Unauthenticated : GlobalRoute
 
 @Serializable

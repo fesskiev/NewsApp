@@ -28,6 +28,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import com.news.auth.SplashAction.BiometricAuthenticated
 import com.news.auth.SplashAction.BiometricAuthenticatorError
 import kotlinx.coroutines.launch
+import org.news.security.biometric.PromptConfig
 import org.news.security.biometric.launchBiometricAuthenticator
 
 @Composable
@@ -43,7 +44,12 @@ internal fun SplashScreen(
         when (event) {
             is SplashEvent.LaunchBiometricAuthenticator -> {
                 launch {
-                    activity.launchBiometricAuthenticator().fold(
+                    activity.launchBiometricAuthenticator(
+                        config = PromptConfig(
+                            title = "Biometric Authentication",
+                            subtitle = "Log in using your biometric credential"
+                        )
+                    ).fold(
                         onSuccess = { viewModel.onAction(BiometricAuthenticated(event.authData)) },
                         onFailure = { viewModel.onAction(BiometricAuthenticatorError(it.message)) }
                     )

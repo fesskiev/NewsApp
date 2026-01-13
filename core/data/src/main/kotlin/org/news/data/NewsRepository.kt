@@ -2,7 +2,7 @@ package org.news.data
 
 import org.news.common.utils.Result
 import org.news.model.Article
-import org.news.model.Error
+import org.news.model.Failure
 import org.news.network.service.NewsApiService
 import org.news.network.model.mapToDomainArticles
 
@@ -12,7 +12,7 @@ interface NewsRepository {
         query: String,
         from: String,
         to: String
-    ): Result<List<Article>, Error>
+    ): Result<List<Article>, Failure>
 
     fun clearQueryCache(
         query: String,
@@ -31,7 +31,7 @@ internal class NewsRepositoryImpl(
         query: String,
         from: String,
         to: String
-    ): Result<List<Article>, Error> {
+    ): Result<List<Article>, Failure> {
         val cacheKey = "$query|$from|$to"
 
         cache[cacheKey]?.let { cachedArticles ->

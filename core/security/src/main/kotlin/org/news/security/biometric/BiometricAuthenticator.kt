@@ -7,9 +7,18 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import java.security.Signature
 import kotlin.coroutines.resume
 import org.news.common.utils.Result
-import org.news.model.Error
+import org.news.model.Failure
 
-suspend fun FragmentActivity.launchBiometricAuthenticator(signature: Signature): Result<Signature, Error> =
+data class PromptConfig(
+    val title: String,
+    val subtitle: String,
+    val negativeButtonText: String? = null
+)
+
+suspend fun FragmentActivity.launchBiometricAuthenticator(
+    config: PromptConfig,
+    signature: Signature
+): Result<Signature, Failure> =
     suspendCancellableCoroutine { continuation ->
         val biometricPrompt = BiometricPrompt(
             this,
@@ -19,35 +28,33 @@ suspend fun FragmentActivity.launchBiometricAuthenticator(signature: Signature):
                     result.cryptoObject?.signature?.let {
                         continuation.resume(Result.Success(it))
                     } ?: continuation.resume(
-                        Result.Failure(Error("Signature not available"))
+                        Result.Failure(Failure("Signature not available"))
                     )
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    continuation.resume(Result.Failure(Error(errString.toString())))
+                    continuation.resume(Result.Failure(Failure(errString.toString())))
                 }
 
                 override fun onAuthenticationFailed() {
-                    continuation.resume(Result.Failure(Error("Authentication failed")))
+                    continuation.resume(Result.Failure(Failure("Authentication failed")))
                 }
             }
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Biometric Authentication")
-            .setSubtitle("Log in using your biometric credential")
-            .setNegativeButtonText("Use password")
+            .setTitle(config.title)
+            .setSubtitle(config.subtitle)
+            .apply { config.negativeButtonText?.let(::setNegativeButtonText) }
             .build()
 
-        val crypto = BiometricPrompt.CryptoObject(signature)
-        biometricPrompt.authenticate(promptInfo, crypto)
-
+        biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(signature))
         continuation.invokeOnCancellation {
             biometricPrompt.cancelAuthentication()
         }
     }
 
-suspend fun FragmentActivity.launchBiometricAuthenticator(): Result<Unit, Error> =
+suspend fun FragmentActivity.launchBiometricAuthenticator(config: PromptConfig): Result<Unit, Failure> =
     suspendCancellableCoroutine { continuation ->
         val biometricPrompt = BiometricPrompt(
             this,
@@ -58,19 +65,19 @@ suspend fun FragmentActivity.launchBiometricAuthenticator(): Result<Unit, Error>
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    continuation.resume(Result.Failure(Error(errString.toString())))
+                    continuation.resume(Result.Failure(Failure(errString.toString())))
                 }
 
                 override fun onAuthenticationFailed() {
-                    continuation.resume(Result.Failure(Error("Authentication failed")))
+                    continuation.resume(Result.Failure(Failure("Authentication failed")))
                 }
             }
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Biometric Authentication")
-            .setSubtitle("Log in using your biometric credential")
-            .setNegativeButtonText("Use password")
+            .setTitle(config.title)
+            .setSubtitle(config.subtitle)
+            .apply { config.negativeButtonText?.let(::setNegativeButtonText) }
             .build()
 
         biometricPrompt.authenticate(promptInfo)

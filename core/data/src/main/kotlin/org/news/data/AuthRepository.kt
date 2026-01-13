@@ -3,15 +3,15 @@ package org.news.data
 import org.news.common.utils.Result
 import org.news.network.model.AuthApiResponse
 import org.news.network.service.AuthApiService
-import org.news.model.Error
+import org.news.model.Failure
 
 interface AuthRepository {
 
-    suspend fun login(username: String, password: String): Result<AuthApiResponse, Error>
+    suspend fun login(username: String, password: String): Result<AuthApiResponse, Failure>
 
-    suspend fun registerBiometric(userId: String, publicKey: String): Result<AuthApiResponse, Error>
+    suspend fun registerBiometric(userId: String, publicKey: String): Result<AuthApiResponse, Failure>
 
-    suspend fun loginBiometric(userId: String, data: String, signature: String): Result<AuthApiResponse, Error>
+    suspend fun loginBiometric(userId: String, data: String, signature: String): Result<AuthApiResponse, Failure>
 }
 
 internal class AuthRepositoryImpl(

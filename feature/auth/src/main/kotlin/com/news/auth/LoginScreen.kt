@@ -57,6 +57,7 @@ import org.news.common.test.TestTag.LOADING_INDICATOR
 import org.news.design.NewsAppTheme
 import org.news.design.components.Snackbar
 import org.news.design.components.SnackbarParams
+import org.news.security.biometric.PromptConfig
 import org.news.security.biometric.launchBiometricAuthenticator
 import java.security.Signature
 
@@ -80,7 +81,14 @@ internal fun LoginScreen(
             LoginEvent.EnrollBiometric -> launcher.launch(createSettingIntent())
             is LoginEvent.LaunchBiometricAuthenticator ->
                 launch {
-                    activity.launchBiometricAuthenticator(event.signature).fold(
+                    activity.launchBiometricAuthenticator(
+                        config = PromptConfig(
+                            title = "Biometric Authentication",
+                            subtitle = "Log in using your biometric credential",
+                            negativeButtonText = "Use password"
+                        ),
+                        signature = event.signature
+                    ).fold(
                         onSuccess = { viewModel.onAction(BiometricAuthenticated(it)) },
                         onFailure = { viewModel.onAction(BiometricAuthenticatorError(it.message)) }
                     )
@@ -123,6 +131,7 @@ private fun LoginScaffold(
                     isError = true
                 )
             )
+
             else -> Unit
         }
     }

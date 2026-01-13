@@ -1,5 +1,5 @@
 package org.news.model
 
-data class Error (
+data class Failure (
     val message: String
 )

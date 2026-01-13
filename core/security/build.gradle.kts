@@ -23,6 +23,9 @@ kotlin {
 
 
 dependencies {
+    api(project(":core:common"))
+    api(project(":core:model"))
+
     implementation(libs.androidx.biometric)
 
     implementation(libs.koin.core)

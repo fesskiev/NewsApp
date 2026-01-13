@@ -78,19 +78,9 @@ internal class LoginViewModel(
             is LoginAction.EmailChange -> uiState.update { it.copy(email = action.email) }
             is LoginAction.PasswordChange -> uiState.update { it.copy(password = action.password) }
             is LoginAction.BiometricAuthenticated -> biometricAuthenticated(action.signature)
-            is LoginAction.BiometricAuthenticatorError -> emitUiEvent(
-                BiometricAuthenticatorError(
-                    action.error
-                )
-            )
-
+            is LoginAction.BiometricAuthenticatorError -> emitUiEvent(BiometricAuthenticatorError(action.error))
             LoginAction.CheckBiometricEnable -> checkBiometricEnable()
-            is LoginAction.BiometricAuthenticateClick -> emitUiEvent(
-                LaunchBiometricAuthenticator(
-                    action.signature
-                )
-            )
-
+            is LoginAction.BiometricAuthenticateClick -> emitUiEvent(LaunchBiometricAuthenticator(action.signature))
             LoginAction.EnableBiometricClick -> emitUiEvent(EnrollBiometric)
             LoginAction.LoginClick -> TODO()
         }

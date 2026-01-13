@@ -6,7 +6,6 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,7 +40,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.news.auth.LoginAction.BiometricAuthenticateClick
 import com.news.auth.LoginAction.BiometricAuthenticated
@@ -51,6 +49,7 @@ import com.news.auth.LoginAction.EmailChange
 import com.news.auth.LoginAction.EnableBiometricClick
 import com.news.auth.LoginAction.LoginClick
 import com.news.auth.LoginAction.PasswordChange
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.news.auth.R
 import org.news.common.mvi.UiEvent
@@ -58,6 +57,7 @@ import org.news.common.test.TestTag.LOADING_INDICATOR
 import org.news.design.NewsAppTheme
 import org.news.design.components.Snackbar
 import org.news.design.components.SnackbarParams
+import org.news.security.biometric.launchBiometricAuthenticator
 import java.security.Signature
 
 @Composable
@@ -73,20 +73,19 @@ internal fun LoginScreen(
         viewModel.onAction(CheckBiometricEnable)
     }
 
-    val biometricAuthenticator = rememberBiometricAuthenticator(
-        onSuccess = {
-            viewModel.onAction(BiometricAuthenticated(it))
-        },
-        onError = {
-            viewModel.onAction(BiometricAuthenticatorError(it))
-        }
-    )
-
+    val activity = LocalActivity.current as FragmentActivity
     LaunchedEffect(uiEvent) {
         val event = uiEvent?.event ?: return@LaunchedEffect
         when (event) {
             LoginEvent.EnrollBiometric -> launcher.launch(createSettingIntent())
-            is LoginEvent.LaunchBiometricAuthenticator -> biometricAuthenticator(event.signature)
+            is LoginEvent.LaunchBiometricAuthenticator ->
+                launch {
+                    activity.launchBiometricAuthenticator(event.signature).fold(
+                        onSuccess = { viewModel.onAction(BiometricAuthenticated(it)) },
+                        onFailure = { viewModel.onAction(BiometricAuthenticatorError(it.message)) }
+                    )
+                }
+
             else -> Unit
         }
     }
@@ -182,7 +181,7 @@ private fun LoginContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { onAction(LoginClick)},
+                onClick = { onAction(LoginClick) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = uiState.isLoginButtonEnable,
             ) {
@@ -234,50 +233,6 @@ private fun LoginContent(
                         .testTag(LOADING_INDICATOR)
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun rememberBiometricAuthenticator(
-    onSuccess: (Signature) -> Unit,
-    onError: (String) -> Unit
-): (Signature) -> Unit {
-    val activity = LocalActivity.current as FragmentActivity
-    val biometricPrompt = remember {
-        BiometricPrompt(
-            activity,
-            ContextCompat.getMainExecutor(activity),
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    result.cryptoObject?.signature?.let {
-                        onSuccess(it)
-                    }
-                }
-
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    onError(errString.toString())
-                }
-
-                override fun onAuthenticationFailed() {
-                    onError("Authentication failed")
-                }
-            }
-        )
-    }
-
-    val promptInfo = remember {
-        BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Biometric Authentication")
-            .setSubtitle("Log in using your biometric credential")
-            .setNegativeButtonText("Use password")
-            .build()
-    }
-
-    return remember {
-        { signature ->
-            val crypto = BiometricPrompt.CryptoObject(signature)
-            biometricPrompt.authenticate(promptInfo, crypto)
         }
     }
 }

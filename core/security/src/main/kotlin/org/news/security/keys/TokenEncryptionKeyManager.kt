@@ -4,6 +4,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import org.news.security.di.ANDROID_KEYSTORE_PROVIDER
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -30,11 +31,11 @@ class TokenEncryptionKeyManagerImpl(
     private val keyStore: KeyStore
 ) : TokenEncryptionKeyManager {
 
-    override suspend fun generateAESKeyIfNeed(keyAlias: String): Boolean {
-        return try {
+    override suspend fun generateAESKeyIfNeed(keyAlias: String): Boolean = withContext(dispatcher) {
+        return@withContext try {
             if (keyStore.containsAlias(keyAlias)) {
                 Log.w(TAG, "AES key alias '$keyAlias' already exists. Skipping generation.")
-                return true
+                return@withContext true
             }
             val keyGenerator = KeyGenerator.getInstance(
                 KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE_PROVIDER
@@ -58,54 +59,58 @@ class TokenEncryptionKeyManagerImpl(
         }
     }
 
-    override suspend fun getCipherForEncryption(keyAlias: String): Cipher? {
-        return try {
-            val aesKey = keyStore.getKey(keyAlias, null) as? SecretKey
-                ?: throw KeyStoreException("AES key not found for alias: $keyAlias")
+    override suspend fun getCipherForEncryption(keyAlias: String): Cipher? =
+        withContext(dispatcher) {
+            return@withContext try {
+                val aesKey = keyStore.getKey(keyAlias, null) as? SecretKey
+                    ?: throw KeyStoreException("AES key not found for alias: $keyAlias")
 
-            Cipher.getInstance(AES_TRANSFORMATION).apply {
-                init(Cipher.ENCRYPT_MODE, aesKey)
+                Cipher.getInstance(AES_TRANSFORMATION).apply {
+                    init(Cipher.ENCRYPT_MODE, aesKey)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to initialize Cipher for encryption: $keyAlias", e)
+                null
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize Cipher for encryption: $keyAlias", e)
-            null
         }
-    }
 
-    override suspend fun getCipherForDecryption(keyAlias: String, iv: ByteArray): Cipher? {
-        return try {
-            val aesKey = keyStore.getKey(keyAlias, null) as? SecretKey
-                ?: throw KeyStoreException("AES key not found for alias: $keyAlias")
+    override suspend fun getCipherForDecryption(keyAlias: String, iv: ByteArray): Cipher? =
+        withContext(dispatcher) {
+            return@withContext try {
+                val aesKey = keyStore.getKey(keyAlias, null) as? SecretKey
+                    ?: throw KeyStoreException("AES key not found for alias: $keyAlias")
 
-            val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
-            Cipher.getInstance(AES_TRANSFORMATION).apply {
-                init(Cipher.DECRYPT_MODE, aesKey, spec)
+                val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
+                Cipher.getInstance(AES_TRANSFORMATION).apply {
+                    init(Cipher.DECRYPT_MODE, aesKey, spec)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to initialize Cipher for decryption: $keyAlias", e)
+                null
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize Cipher for decryption: $keyAlias", e)
-            null
         }
-    }
 
-    override suspend fun encryptToken(cipher: Cipher, token: String): ByteArray? {
-        return try {
-            val iv = cipher.iv
-            val encryptedBytes = cipher.doFinal(token.toByteArray(Charsets.UTF_8))
-            iv + encryptedBytes
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to encrypt token", e)
-            null
+    override suspend fun encryptToken(cipher: Cipher, token: String): ByteArray? =
+        withContext(dispatcher) {
+            return@withContext try {
+                val iv = cipher.iv
+                val encryptedBytes = cipher.doFinal(token.toByteArray(Charsets.UTF_8))
+                iv + encryptedBytes
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to encrypt token", e)
+                null
+            }
         }
-    }
 
-    override suspend fun decryptToken(cipher: Cipher, encryptedToken: ByteArray): String? {
-        return try {
-            val ciphertext = encryptedToken.copyOfRange(GCM_IV_LENGTH, encryptedToken.size)
-            val decryptedBytes = cipher.doFinal(ciphertext)
-            String(decryptedBytes, Charsets.UTF_8)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to decrypt token", e)
-            null
+    override suspend fun decryptToken(cipher: Cipher, encryptedToken: ByteArray): String? =
+        withContext(dispatcher) {
+            return@withContext try {
+                val ciphertext = encryptedToken.copyOfRange(GCM_IV_LENGTH, encryptedToken.size)
+                val decryptedBytes = cipher.doFinal(ciphertext)
+                String(decryptedBytes, Charsets.UTF_8)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to decrypt token", e)
+                null
+            }
         }
-    }
 }

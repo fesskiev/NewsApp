@@ -22,7 +22,8 @@ internal data class SplashState(
 )
 
 internal sealed interface SplashAction {
-
+    data class BiometricAuthenticated(val authData: StoredAuthData) : SplashAction
+    data class BiometricAuthenticatorError(val error: String) : SplashAction
 }
 
 internal sealed interface SplashEvent {
@@ -44,7 +45,8 @@ internal class SplashViewModel(
 
     override fun onAction(action: SplashAction) {
         when (action) {
-            else -> Unit
+            is SplashAction.BiometricAuthenticated -> decryptTokens(action.authData)
+            is SplashAction.BiometricAuthenticatorError -> TODO()
         }
     }
 
@@ -54,61 +56,59 @@ internal class SplashViewModel(
             return
         }
         viewModelScope.launch {
-            try {
-                val alias = getAlias()
-                if (!keyManager.generateAESKeyIfNeed(alias)) {
-                    navigateToLogin()
-                    return@launch
-                }
-
-                val authData = authDataStorage.get()
-                    .firstOrNull()
-                    ?: run {
-                        navigateToLogin()
-                        return@launch
-                    }
-
-                if (authData.getTokenExpiryStatus() == TokenExpiryStatus.BOTH_EXPIRED) {
-                    navigateToLogin()
-                    return@launch
-                }
-
-                emitUiEvent(LaunchBiometricAuthenticator(authData))
-            } catch (e: Exception) {
+            val alias = getAlias()
+            if (!keyManager.generateAESKeyIfNeed(alias)) {
                 navigateToLogin()
+                return@launch
             }
+
+            val authData = authDataStorage.get()
+                .firstOrNull()
+                ?: run {
+                    navigateToLogin()
+                    return@launch
+                }
+
+            if (authData.getTokenExpiryStatus() == TokenExpiryStatus.BOTH_EXPIRED) {
+                navigateToLogin()
+                return@launch
+            }
+
+            emitUiEvent(LaunchBiometricAuthenticator(authData))
         }
     }
 
-    private suspend fun decryptTokens(authData: StoredAuthData) {
-        val alias = getAlias()
-        val encryptedAccessToken = authData.encryptedAccessToken
-        val iv = encryptedAccessToken.copyOfRange(0, GCM_IV_LENGTH)
-        val cipher = keyManager.getCipherForDecryption(alias, iv)
-        if (cipher == null) {
-            navigateToLogin()
-            return
-        }
-        val encryptedRefreshToken = authData.encryptedRefreshToken
-        val accessToken =
-            keyManager.decryptToken(cipher, encryptedAccessToken)
-        val refreshToken =
-            keyManager.decryptToken(cipher, encryptedRefreshToken)
-        if (accessToken == null || refreshToken == null) {
-            navigateToLogin()
-            return
-        }
-        tokenProvider.setTokens(accessToken, refreshToken)
-        when (authData.getTokenExpiryStatus()) {
-            TokenExpiryStatus.ACCESS_VALID -> navigateToHome()
-            TokenExpiryStatus.REFRESH_VALID -> {
-                val isRefreshSuccess = tokenProvider.refreshToken()
-                if (isRefreshSuccess) {
-                    navigateToHome()
-                }
+    private fun decryptTokens(authData: StoredAuthData) {
+        viewModelScope.launch {
+            val alias = getAlias()
+            val encryptedAccessToken = authData.encryptedAccessToken
+            val iv = encryptedAccessToken.copyOfRange(0, GCM_IV_LENGTH)
+            val cipher = keyManager.getCipherForDecryption(alias, iv)
+            if (cipher == null) {
+                navigateToLogin()
+                return@launch
             }
+            val encryptedRefreshToken = authData.encryptedRefreshToken
+            val accessToken =
+                keyManager.decryptToken(cipher, encryptedAccessToken)
+            val refreshToken =
+                keyManager.decryptToken(cipher, encryptedRefreshToken)
+            if (accessToken == null || refreshToken == null) {
+                navigateToLogin()
+                return@launch
+            }
+            tokenProvider.setTokens(accessToken, refreshToken)
+            when (authData.getTokenExpiryStatus()) {
+                TokenExpiryStatus.ACCESS_VALID -> navigateToHome()
+                TokenExpiryStatus.REFRESH_VALID -> {
+                    val isRefreshSuccess = tokenProvider.refreshToken()
+                    if (isRefreshSuccess) {
+                        navigateToHome()
+                    }
+                }
 
-            TokenExpiryStatus.BOTH_EXPIRED -> navigateToLogin()
+                TokenExpiryStatus.BOTH_EXPIRED -> navigateToLogin()
+            }
         }
     }
 

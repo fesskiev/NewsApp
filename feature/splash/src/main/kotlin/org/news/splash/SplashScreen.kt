@@ -1,4 +1,4 @@
-package com.news.auth
+package org.news.splash
 
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -25,16 +25,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
 import org.koin.compose.viewmodel.koinViewModel
-import com.news.auth.SplashAction.BiometricAuthenticated
-import com.news.auth.SplashAction.BiometricAuthenticatorError
+import org.news.splash.SplashAction.BiometricAuthenticated
+import org.news.splash.SplashAction.BiometricAuthenticatorError
 import kotlinx.coroutines.launch
 import org.news.security.biometric.PromptConfig
 import org.news.security.biometric.launchBiometricAuthenticator
 
 @Composable
 internal fun SplashScreen(
-    viewModel: SplashViewModel = koinViewModel(),
-    onNavigateToAuth: () -> Unit
+    viewModel: SplashViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val uiEvent by viewModel.uiEvent.collectAsState(null)

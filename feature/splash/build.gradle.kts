@@ -1,39 +1,26 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "org.news"
+    namespace = "org.news.splash"
+
     compileSdk = libs.versions.android.compileSdk.get().toInt()
-
     defaultConfig {
-        applicationId = "org.news"
-
         minSdk = libs.versions.android.minSdk.get().toInt()
-        minSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+    buildFeatures {
+        compose = true
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-    buildFeatures {
-        compose = true
     }
 }
 
@@ -42,11 +29,13 @@ kotlin {
 }
 
 dependencies {
-    api(project(":feature:splash"))
-    api(project(":feature:auth"))
-    api(project(":feature:feed"))
+    api(project(":core:common"))
+    api(project(":core:data"))
+    api(project(":core:design"))
+    api(project(":core:security"))
+    api(project(":core:storage"))
+    api(project(":core:navigation"))
 
-    implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
@@ -56,4 +45,12 @@ dependencies {
 
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
+    implementation(libs.koin.compose.viewmodel)
+
+    implementation(libs.androidx.biometric)
+
+    androidTestImplementation (libs.androidx.compose.ui.test.junit4)
+    debugImplementation (libs.androidx.compose.ui.test.manifest)
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
 }

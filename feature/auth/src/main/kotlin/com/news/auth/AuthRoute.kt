@@ -41,9 +41,6 @@ import kotlinx.serialization.Serializable
  */
 
 @Serializable
-private data object Splash : NavKey
-
-@Serializable
 private data object Login : NavKey
 
 @Serializable
@@ -51,19 +48,11 @@ private data object Registration : NavKey
 
 @Composable
 fun AuthRoute() {
-    val backStack = rememberNavBackStack(Splash)
+    val backStack = rememberNavBackStack(Login)
     NavDisplay(
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
         entryProvider = entryProvider {
-            entry<Splash> {
-                SplashScreen(
-                    onNavigateToAuth = {
-                        backStack.clear() // Clear Splash from stack
-                        backStack.add(Login) // Add Login as the new root
-                    }
-                )
-            }
             entry<Login> {
                 LoginScreen(
                     onNavigateToRegistration = { backStack.add(Registration) }

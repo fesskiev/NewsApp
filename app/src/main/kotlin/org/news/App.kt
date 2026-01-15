@@ -13,6 +13,7 @@ import org.news.di.storageModule
 import org.news.navigation.di.navigationModule
 import org.news.network.di.networkModule
 import org.news.security.di.securityModule
+import org.news.splash.di.splashModule
 
 class App : Application() {
 
@@ -32,6 +33,7 @@ class App : Application() {
             databModule,
             securityModule,
             navigationModule,
+            splashModule,
             authModule,
             newsFeedModule
         )

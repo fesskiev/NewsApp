@@ -1,9 +1,10 @@
-package com.news.auth
+package org.news.splash
 
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import com.news.auth.SplashEvent.*
+import org.news.splash.SplashEvent.*
 import org.news.common.mvi.MviViewModel
 import org.news.model.StoredAuthData
 import org.news.model.TokenExpiryStatus
@@ -121,10 +122,12 @@ internal class SplashViewModel(
     }
 
     private suspend fun navigateToHome() {
+        delay(1000)
         globalNavigationEventBus.navigateTo(Home)
     }
 
     private suspend fun navigateToAuth() {
+        delay(1000)
         globalNavigationEventBus.navigateTo(Auth)
     }
 }

@@ -9,10 +9,10 @@ sealed interface GlobalRoute
 data object Splash : GlobalRoute
 
 @Serializable
-data object Unauthenticated : GlobalRoute
+data object Auth : GlobalRoute
 
 @Serializable
-data object Authenticated : GlobalRoute
+data object Home : GlobalRoute
 
 @Serializable
 sealed interface Route

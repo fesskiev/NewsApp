@@ -6,7 +6,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import org.news.navigation.GlobalNavigationEventBus
-import org.news.navigation.Unauthenticated
+import org.news.navigation.Auth
 import org.news.network.model.JwtPayload
 import org.news.network.service.AuthApiService
 import kotlin.time.Instant
@@ -54,7 +54,7 @@ internal class TokenProviderImpl(
         } catch (e: Exception) {
             e.printStackTrace()
             bearerTokens = null
-            globalNavigationEventBus.navigateTo(Unauthenticated)
+            globalNavigationEventBus.navigateTo(Auth)
             false
         }
     }

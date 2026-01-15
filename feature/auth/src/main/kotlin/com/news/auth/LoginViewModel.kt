@@ -48,6 +48,7 @@ internal sealed interface LoginAction {
     data object LoginClick : LoginAction
     data object CheckBiometricEnable : LoginAction
     data class BiometricAuthenticatorError(val error: String) : LoginAction
+    data object RegistrationClick : LoginAction
 }
 
 internal sealed interface LoginEvent {
@@ -59,6 +60,7 @@ internal sealed interface LoginEvent {
 
     data class LaunchBiometricAuthenticator(val signature: Signature) : LoginEvent
     data object EnrollBiometric : LoginEvent
+    data object NavigateToRegistration : LoginEvent
 }
 
 internal class LoginViewModel(
@@ -82,8 +84,13 @@ internal class LoginViewModel(
             LoginAction.CheckBiometricEnable -> checkBiometricEnable()
             is LoginAction.BiometricAuthenticateClick -> emitUiEvent(LaunchBiometricAuthenticator(action.signature))
             LoginAction.EnableBiometricClick -> emitUiEvent(EnrollBiometric)
-            LoginAction.LoginClick -> TODO()
+            LoginAction.LoginClick -> handleLoginClick()
+            LoginAction.RegistrationClick -> emitUiEvent(NavigateToRegistration)
         }
+    }
+
+    private fun handleLoginClick() {
+
     }
 
     private fun checkBiometricEnable() {

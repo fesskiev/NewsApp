@@ -11,7 +11,8 @@ val authModule = module {
             keyManager = get(),
             biometricManager = get(),
             authDataStorage = get(),
-            tokenProvider = get()
+            tokenProvider = get(),
+            globalNavigationEventBus = get()
         )
     }
     viewModel {

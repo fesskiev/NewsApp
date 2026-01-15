@@ -8,6 +8,9 @@ import org.news.common.mvi.MviViewModel
 import org.news.model.StoredAuthData
 import org.news.model.TokenExpiryStatus
 import org.news.model.getTokenExpiryStatus
+import org.news.navigation.Auth
+import org.news.navigation.GlobalNavigationEventBus
+import org.news.navigation.Home
 import org.news.network.token.TokenProvider
 import org.news.security.biometric.BiometricCapability
 import org.news.security.biometric.BiometricManager
@@ -34,7 +37,8 @@ internal class SplashViewModel(
     private val keyManager: TokenEncryptionKeyManager,
     private val biometricManager: BiometricManager,
     private val authDataStorage: AuthDataStorage,
-    private val tokenProvider: TokenProvider
+    private val tokenProvider: TokenProvider,
+    private val globalNavigationEventBus: GlobalNavigationEventBus
 ) : MviViewModel<SplashState, SplashAction, SplashEvent>(
     initialState = SplashState()
 ) {
@@ -51,26 +55,26 @@ internal class SplashViewModel(
     }
 
     private fun checkLocalAuthState() {
-        if (biometricManager.checkBiometricCapability() != BiometricCapability.AVAILABLE) {
-            navigateToLogin()
-            return
-        }
         viewModelScope.launch {
+            if (biometricManager.checkBiometricCapability() != BiometricCapability.AVAILABLE) {
+                navigateToAuth()
+                return@launch
+            }
             val alias = getAlias()
             if (!keyManager.generateAESKeyIfNeed(alias)) {
-                navigateToLogin()
+                navigateToAuth()
                 return@launch
             }
 
             val authData = authDataStorage.get()
                 .firstOrNull()
                 ?: run {
-                    navigateToLogin()
+                    navigateToAuth()
                     return@launch
                 }
 
             if (authData.getTokenExpiryStatus() == TokenExpiryStatus.BOTH_EXPIRED) {
-                navigateToLogin()
+                navigateToAuth()
                 return@launch
             }
 
@@ -85,7 +89,7 @@ internal class SplashViewModel(
             val iv = encryptedAccessToken.copyOfRange(0, GCM_IV_LENGTH)
             val cipher = keyManager.getCipherForDecryption(alias, iv)
             if (cipher == null) {
-                navigateToLogin()
+                navigateToAuth()
                 return@launch
             }
             val encryptedRefreshToken = authData.encryptedRefreshToken
@@ -94,7 +98,7 @@ internal class SplashViewModel(
             val refreshToken =
                 keyManager.decryptToken(cipher, encryptedRefreshToken)
             if (accessToken == null || refreshToken == null) {
-                navigateToLogin()
+                navigateToAuth()
                 return@launch
             }
             tokenProvider.setTokens(accessToken, refreshToken)
@@ -107,7 +111,7 @@ internal class SplashViewModel(
                     }
                 }
 
-                TokenExpiryStatus.BOTH_EXPIRED -> navigateToLogin()
+                TokenExpiryStatus.BOTH_EXPIRED -> navigateToAuth()
             }
         }
     }
@@ -116,11 +120,11 @@ internal class SplashViewModel(
         return KEY_ALIAS + "test@gmail.com"
     }
 
-    private fun navigateToHome() {
-
+    private suspend fun navigateToHome() {
+        globalNavigationEventBus.navigateTo(Home)
     }
 
-    private fun navigateToLogin() {
-
+    private suspend fun navigateToAuth() {
+        globalNavigationEventBus.navigateTo(Auth)
     }
 }

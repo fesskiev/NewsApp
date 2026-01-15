@@ -9,10 +9,10 @@ import androidx.fragment.app.FragmentActivity
 import com.news.auth.AuthRoute
 import org.koin.compose.koinInject
 import org.news.design.NewsAppTheme
-import org.news.navigation.Authenticated
+import org.news.navigation.Home
 import org.news.navigation.GlobalNavigationEventBus
 import org.news.navigation.Splash
-import org.news.navigation.Unauthenticated
+import org.news.navigation.Auth
 
 class MainActivity : FragmentActivity() {
 
@@ -25,8 +25,8 @@ class MainActivity : FragmentActivity() {
                 val globalRoute by navigationEventBus.globalNavigation.collectAsState(initial = Splash)
                 when (globalRoute) {
                     is Splash -> AuthRoute()
-                    is Unauthenticated -> AuthRoute()
-                    is Authenticated -> ArticleListRoute(onArticleClick = { })
+                    is Auth -> AuthRoute()
+                    is Home -> ArticleListRoute(onArticleClick = { })
                 }
             }
         }

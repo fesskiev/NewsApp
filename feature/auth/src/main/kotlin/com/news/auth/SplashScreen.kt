@@ -33,7 +33,8 @@ import org.news.security.biometric.launchBiometricAuthenticator
 
 @Composable
 internal fun SplashScreen(
-    viewModel: SplashViewModel = koinViewModel()
+    viewModel: SplashViewModel = koinViewModel(),
+    onNavigateToAuth: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val uiEvent by viewModel.uiEvent.collectAsState(null)

@@ -63,7 +63,8 @@ import java.security.Signature
 
 @Composable
 internal fun LoginScreen(
-    viewModel: LoginViewModel = koinViewModel()
+    viewModel: LoginViewModel = koinViewModel(),
+    onNavigateToRegistration: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val uiEvent by viewModel.uiEvent.collectAsState(null)
@@ -93,7 +94,7 @@ internal fun LoginScreen(
                         onFailure = { viewModel.onAction(BiometricAuthenticatorError(it.message)) }
                     )
                 }
-
+            is LoginEvent.NavigateToRegistration -> onNavigateToRegistration()
             else -> Unit
         }
     }
@@ -231,6 +232,23 @@ private fun LoginContent(
                 }
 
                 BiometricState.Unavailable -> Unit
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    text = "Register",
+                    modifier = Modifier
+                        .clickable(
+                            enabled = !uiState.isLoading,
+                            onClick = { }
+                        ),
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
